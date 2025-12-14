@@ -2,21 +2,21 @@
  * 🎓 CreateCourseForm - Formulario para crear un nuevo curso
  */
 
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useModal } from '@/contexts/ModalContext';
-import { createCourse } from '@/modules/courses/actions';
-import { getSchools } from '@/modules/schools/actions';
-import { Input, Select } from '@/components/ui';
-import type { School } from '@/types';
-import './CourseForms.css';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useModal } from "@/contexts/ModalContext";
+import { createCourse } from "@/modules/courses/actions";
+import { getSchools } from "@/modules/schools/actions";
+import { Input, Select } from "@/components/ui";
+import type { School } from "@/types";
+import "./CourseForms.css";
 
 const ACADEMIC_LEVELS = [
-  { value: 'PRIMARIA', label: 'Primaria' },
-  { value: 'SECUNDARIA', label: 'Secundaria' },
-  { value: 'MEDIA', label: 'Media' },
+  { value: "PRIMARIA", label: "Primaria" },
+  { value: "SECUNDARIA", label: "Secundaria" },
+  { value: "MEDIA", label: "Media" },
 ];
 
 interface CreateCourseFormProps {
@@ -28,16 +28,16 @@ export function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
   const { closeModal } = useModal();
   const [isLoading, setIsLoading] = useState(false);
   const [schools, setSchools] = useState<School[]>([]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
-    schoolId: '',
+    schoolId: "",
   });
 
   useEffect(() => {
     const loadSchools = async () => {
       const data = await getSchools();
       setSchools(data);
-      
+
       // Si solo hay un colegio, auto-seleccionarlo
       if (data.length === 1) {
         setFormData({ schoolId: data[0].id });
@@ -48,19 +48,19 @@ export function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const studentCount = formData.get('studentCount');
-    
+    const studentCount = formData.get("studentCount");
+
     const data = {
-      schoolId: formData.get('schoolId') as string,
-      name: formData.get('name') as string,
-      grade: formData.get('grade') as string,
-      section: formData.get('section') as string,
-      academicLevel: formData.get('academicLevel') as string,
-      academicYear: parseInt(formData.get('academicYear') as string),
+      schoolId: formData.get("schoolId") as string,
+      name: formData.get("name") as string,
+      grade: formData.get("grade") as string,
+      section: formData.get("section") as string,
+      academicLevel: formData.get("academicLevel") as string,
+      academicYear: parseInt(formData.get("academicYear") as string),
       studentCount: studentCount ? parseInt(studentCount as string) : undefined,
     };
 
@@ -70,7 +70,7 @@ export function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
       onSuccess?.(); // Llamar al callback para recargar los datos
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al crear el curso');
+      setError(err instanceof Error ? err.message : "Error al crear el curso");
     } finally {
       setIsLoading(false);
     }
@@ -80,11 +80,7 @@ export function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="course-form">
-      {error && (
-        <div className="form-error">
-          {error}
-        </div>
-      )}
+      {error && <div className="form-error">{error}</div>}
 
       <div className="form-group">
         <label htmlFor="schoolId" className="form-label">
@@ -98,9 +94,9 @@ export function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
           value={formData.schoolId}
           onChange={(e) => setFormData({ schoolId: e.target.value })}
           placeholder="Selecciona un colegio"
-          options={schools.map(school => ({
+          options={schools.map((school) => ({
             value: school.id,
-            label: school.name
+            label: school.name,
           }))}
         />
       </div>
@@ -208,7 +204,7 @@ export function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
           className="auth-button auth-button-primary"
           disabled={isLoading}
         >
-          {isLoading ? 'Creando...' : 'Crear Curso'}
+          {isLoading ? "Creando..." : "Crear Curso"}
         </button>
       </div>
     </form>

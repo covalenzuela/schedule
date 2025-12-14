@@ -18,10 +18,12 @@
 .dashboard-gradient {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 30% 20%, 
-    rgba(13, 139, 255, 0.1) 0%, 
-    rgba(168, 85, 247, 0.05) 40%, 
-    transparent 70%);
+  background: radial-gradient(
+    circle at 30% 20%,
+    rgba(13, 139, 255, 0.1) 0%,
+    rgba(168, 85, 247, 0.05) 40%,
+    transparent 70%
+  );
 }
 
 .dashboard-orb {
@@ -304,15 +306,15 @@
   .dashboard-header-container {
     padding: 0 var(--spacing-4);
   }
-  
+
   .dashboard-main {
     padding: 2rem var(--spacing-4);
   }
-  
+
   .dashboard-user-name {
     display: none;
   }
-  
+
   .dashboard-stats-grid,
   .dashboard-actions-grid {
     grid-template-columns: 1fr;

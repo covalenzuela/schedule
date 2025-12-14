@@ -8,7 +8,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { saveSchedule, getSchedulesForCourse, getSchedulesForTeacher } from "@/modules/schedules/actions";
 import { getSchoolScheduleConfig } from "@/modules/schools/actions";
 import { getSubjects } from "@/modules/subjects/actions";
-import { getTeachers } from "@/modules/teachers/actions";
+import { getTeachers, isTeacherAvailable } from "@/modules/teachers/actions";
 import { getCourses } from "@/modules/courses/actions";
 import { SubjectPalette } from "./SubjectPalette";
 import { QuickAssignModal } from "./QuickAssignModal";
@@ -24,6 +24,7 @@ interface ScheduleConfig {
     startTime: string;
     endTime: string;
   };
+  lunchBreakByDay?: Record<string, {enabled: boolean, start: string, end: string}>;
 }
 
 interface ScheduleBlock {
@@ -33,8 +34,11 @@ interface ScheduleBlock {
   endTime: string;
   subject: string;
   teacher?: string;
+  teacherId?: string; // ID del profesor para validación
   course?: string;
+  courseId?: string; // ID del curso
   color: string;
+  hasConflict?: boolean; // Indica si hay conflicto de disponibilidad
 }
 
 interface ScheduleEditorProps {
@@ -103,9 +107,39 @@ function generateTimeSlots(config: ScheduleConfig): string[] {
 }
 
 // Función para verificar si un slot está en horario de almuerzo
-function isLunchBreak(time: string, config: ScheduleConfig): boolean {
+// Verifica si hay OVERLAP entre el bloque y el periodo de almuerzo
+function isLunchBreak(blockStartTime: string, day: string, config: ScheduleConfig): boolean {
+  // Calcular el tiempo de fin del bloque
+  const [startHour, startMin] = blockStartTime.split(':').map(Number);
+  const blockStartMinutes = startHour * 60 + startMin;
+  const blockEndMinutes = blockStartMinutes + config.blockDuration;
+  
+  const blockEndHour = Math.floor(blockEndMinutes / 60);
+  const blockEndMin = blockEndMinutes % 60;
+  const blockEndTime = `${blockEndHour.toString().padStart(2, '0')}:${blockEndMin.toString().padStart(2, '0')}`;
+  
+  // Si hay configuración por día y tiene la configuración para este día específico, usarla
+  if (config.lunchBreakByDay && Object.keys(config.lunchBreakByDay).length > 0) {
+    const dayConfig = config.lunchBreakByDay[day];
+    if (dayConfig) {
+      if (!dayConfig.enabled) return false;
+      
+      // Verificar si hay overlap: el bloque solapa con almuerzo si:
+      // - El bloque empieza antes de que termine el almuerzo Y
+      // - El bloque termina después de que empiece el almuerzo
+      const hasOverlap = blockStartTime < dayConfig.end && blockEndTime > dayConfig.start;
+      return hasOverlap;
+    }
+    // Si lunchBreakByDay existe pero no tiene este día, no hay almuerzo
+    return false;
+  }
+  
+  // Fallback a configuración global
   if (!config.lunchBreak.enabled) return false;
-  return time >= config.lunchBreak.startTime && time < config.lunchBreak.endTime;
+  
+  // Verificar overlap con configuración global
+  const hasOverlap = blockStartTime < config.lunchBreak.endTime && blockEndTime > config.lunchBreak.startTime;
+  return hasOverlap;
 }
 
 export function ScheduleEditor({
@@ -187,6 +221,7 @@ export function ScheduleEditor({
               endTime: block.endTime,
               subject: block.subject.name,
               teacher: block.teacher ? `${block.teacher.firstName} ${block.teacher.lastName}` : '',
+              teacherId: block.teacher?.id,
               color: block.subject.color || PREDEFINED_COLORS[0],
             }));
             console.log('[Editor] Bloques transformados:', transformedBlocks.length);
@@ -203,6 +238,8 @@ export function ScheduleEditor({
             endTime: block.endTime,
             subject: block.subject.name,
             course: block.course?.name || '',
+            courseId: block.course?.id,
+            teacherId: block.teacherId,
             color: block.subject.color || PREDEFINED_COLORS[0],
           }));
           setBlocks(transformedBlocks);
@@ -276,6 +313,42 @@ export function ScheduleEditor({
     };
   }, [blocks, autoSave]);
 
+  // Validar disponibilidad de profesores
+  useEffect(() => {
+    const validateAvailability = async () => {
+      const updatedBlocks = await Promise.all(
+        blocks.map(async (block) => {
+          // Validar si hay un profesor asignado (en ambos tipos)
+          const teacherId = entityType === 'course' ? block.teacherId : entityId;
+          
+          if (!teacherId) {
+            return { ...block, hasConflict: false };
+          }
+
+          const available = await isTeacherAvailable(
+            teacherId,
+            block.day,
+            block.startTime,
+            block.endTime
+          );
+
+          return { ...block, hasConflict: !available };
+        })
+      );
+
+      // Solo actualizar si hay cambios en los conflictos
+      const hasChanges = updatedBlocks.some((updated, index) => 
+        updated.hasConflict !== blocks[index].hasConflict
+      );
+
+      if (hasChanges) {
+        setBlocks(updatedBlocks);
+      }
+    };
+
+    validateAvailability();
+  }, [blocks.length, entityType, entityId]); // Revalidar cuando cambia la cantidad de bloques
+
   // Drag and drop handlers  // Funciones de drag and drop
   const handleDragStart = (subject: any) => {
     setDraggedSubject(subject);
@@ -283,7 +356,7 @@ export function ScheduleEditor({
 
   const handleDragOver = (e: React.DragEvent, day: string, time: string) => {
     // No permitir drop en horario de almuerzo
-    if (isLunchBreak(time, scheduleConfig)) {
+    if (isLunchBreak(time, day, scheduleConfig)) {
       return;
     }
     e.preventDefault();
@@ -318,8 +391,27 @@ export function ScheduleEditor({
     setDraggedSubject(null);
   };
 
-  const handleQuickAssignConfirm = (detailId: string, detailName: string) => {
+  const handleQuickAssignConfirm = async (detailId: string, detailName: string) => {
     if (!pendingBlock) return;
+
+    // Validar disponibilidad del profesor si estamos editando un curso
+    if (entityType === "course") {
+      const available = await isTeacherAvailable(
+        detailId,
+        pendingBlock.day,
+        pendingBlock.startTime,
+        pendingBlock.endTime
+      );
+
+      if (!available) {
+        const confirm = window.confirm(
+          `⚠️ El profesor ${detailName} no está disponible en este horario.\n\n¿Deseas asignarlo de todas formas?`
+        );
+        if (!confirm) {
+          return;
+        }
+      }
+    }
 
     const block: ScheduleBlock = {
       id: `${Date.now()}`,
@@ -328,8 +420,8 @@ export function ScheduleEditor({
       endTime: pendingBlock.endTime,
       subject: pendingBlock.subject.name,
       ...(entityType === "course"
-        ? { teacher: detailName }
-        : { course: detailName }),
+        ? { teacher: detailName, teacherId: detailId }
+        : { course: detailName, courseId: detailId }),
       color: pendingBlock.subject.color || PREDEFINED_COLORS[0],
     };
 
@@ -343,7 +435,7 @@ export function ScheduleEditor({
     setPendingBlock(null);
   };
 
-  const handleAddBlock = () => {
+  const handleAddBlock = async () => {
     if (!newBlock.subjectId || !newBlock.detailId) {
       alert("Por favor completa todos los campos");
       return;
@@ -355,11 +447,30 @@ export function ScheduleEditor({
     const subjectColor = selectedSubject?.color || newBlock.color;
 
     let detailName = newBlock.detail;
+    let detailId = newBlock.detailId;
+
     if (entityType === "course") {
       const selectedTeacher = teachers.find((t) => t.id === newBlock.detailId);
       detailName = selectedTeacher
         ? `${selectedTeacher.firstName} ${selectedTeacher.lastName}`
         : newBlock.detail;
+
+      // Validar disponibilidad del profesor
+      const available = await isTeacherAvailable(
+        detailId,
+        newBlock.day,
+        newBlock.startTime,
+        newBlock.endTime
+      );
+
+      if (!available) {
+        const confirm = window.confirm(
+          `⚠️ El profesor ${detailName} no está disponible en este horario.\n\n¿Deseas asignarlo de todas formas?`
+        );
+        if (!confirm) {
+          return;
+        }
+      }
     } else {
       const selectedCourse = courses.find((c) => c.id === newBlock.detailId);
       detailName = selectedCourse?.name || newBlock.detail;
@@ -372,8 +483,8 @@ export function ScheduleEditor({
       endTime: newBlock.endTime,
       subject: subjectName,
       ...(entityType === "course"
-        ? { teacher: detailName }
-        : { course: detailName }),
+        ? { teacher: detailName, teacherId: detailId }
+        : { course: detailName, courseId: detailId }),
       color: subjectColor,
     };
 
@@ -456,6 +567,31 @@ export function ScheduleEditor({
         <SubjectPalette subjects={subjects} onDragStart={handleDragStart} />
 
         <div className="schedule-editor" style={{ flex: 1 }}>
+          {/* Banner de advertencia para profesores con conflictos */}
+          {entityType === 'teacher' && blocks.some(b => b.hasConflict) && (
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1))',
+              border: '1px solid rgba(255, 193, 7, 0.3)',
+              borderRadius: '0.75rem',
+              padding: '1rem',
+              margin: '0 0 1rem 0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem'
+            }}>
+              <span style={{ fontSize: '1.5rem' }}>⚠️</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
+                  Tienes bloques fuera de tu disponibilidad
+                </div>
+                <div style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.7)' }}>
+                  Los bloques marcados con ⚠️ están fuera de tu horario de disponibilidad. 
+                  Ve a tu perfil para actualizar tu disponibilidad.
+                </div>
+              </div>
+            </div>
+          )}
+          
           {/* Toolbar */}
           <div className="schedule-editor-toolbar">
             <button
@@ -506,13 +642,13 @@ export function ScheduleEditor({
               {/* Grid cells */}
               <div className="schedule-editor-grid-body">
                 {timeSlots.slice(0, -1).map((time, index) => {
-                  const isLunch = isLunchBreak(time, scheduleConfig);
                   
                   return (<div key={time} className="schedule-editor-grid-row">
                     <div className="schedule-editor-time-cell">
                       {time} - {timeSlots[index + 1]}
                     </div>
                     {DAYS.map((day) => {
+                      const isLunch = isLunchBreak(time, day.key, scheduleConfig);
                       const cellBlocks = getBlocksForSlot(day.key, time);
                       const isDropTarget =
                         dropTarget?.day === day.key &&
@@ -539,16 +675,25 @@ export function ScheduleEditor({
                             }
                           }}
                         >
-                          {cellBlocks.map((block) => (
+                          {cellBlocks.map((block) => {
+                            const conflictMessage = entityType === 'course' 
+                              ? `⚠️ El profesor ${block.teacher} no está disponible en este horario`
+                              : `⚠️ No tienes disponibilidad marcada en este horario. Ve a tu perfil para configurarla.`;
+                            
+                            return (
                             <div
                               key={block.id}
-                              className="schedule-editor-block"
+                              className={`schedule-editor-block ${block.hasConflict ? 'has-conflict' : ''}`}
                               style={{ backgroundColor: block.color }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setSelectedBlock(block);
                               }}
+                              title={block.hasConflict ? conflictMessage : ''}
                             >
+                              {block.hasConflict && (
+                                <div className="schedule-editor-block-warning">⚠️</div>
+                              )}
                               <div className="schedule-editor-block-subject">
                                 {block.subject}
                               </div>
@@ -558,7 +703,8 @@ export function ScheduleEditor({
                                   : block.course}
                               </div>
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       );
                     })}

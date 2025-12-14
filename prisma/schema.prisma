@@ -76,9 +76,15 @@ model School {
   scheduleEndTime     String  @default("18:00") // Hora de término de jornada
   blockDuration       Int     @default(60)      // Duración de bloques en minutos
   breakDuration       Int     @default(15)      // Duración de recreos en minutos
-  lunchBreakEnabled   Boolean @default(true)    // Si hay recreo de almuerzo
-  lunchBreakStart     String  @default("13:00") // Inicio del almuerzo
-  lunchBreakEnd       String  @default("14:00") // Fin del almuerzo
+  lunchBreakEnabled   Boolean @default(true)    // Si hay recreo de almuerzo (global)
+  
+  // NUEVO: Horarios de almuerzo por día (JSON)
+  // Formato: {"MONDAY": {"enabled": true, "start": "13:00", "end": "14:00"}, ...}
+  lunchBreakConfig    String  @default("{\"MONDAY\":{\"enabled\":true,\"start\":\"13:00\",\"end\":\"14:00\"},\"TUESDAY\":{\"enabled\":true,\"start\":\"13:00\",\"end\":\"14:00\"},\"WEDNESDAY\":{\"enabled\":true,\"start\":\"13:00\",\"end\":\"14:00\"},\"THURSDAY\":{\"enabled\":true,\"start\":\"13:00\",\"end\":\"14:00\"},\"FRIDAY\":{\"enabled\":true,\"start\":\"13:00\",\"end\":\"14:00\"}}")
+  
+  // Campos legacy (mantener por compatibilidad)
+  lunchBreakStart     String  @default("13:00")
+  lunchBreakEnd       String  @default("14:00")
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

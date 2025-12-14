@@ -1,11 +1,15 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import { getSchools, deleteSchool } from "@/modules/schools/actions";
-import { SchoolList, AddSchoolButton, SchoolScheduleConfig } from "@/modules/schools/components";
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { useModal } from '@/contexts/ModalContext';
-import type { School } from '@/types';
+import {
+  SchoolList,
+  AddSchoolButton,
+  SchoolScheduleConfig,
+} from "@/modules/schools/components";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useModal } from "@/contexts/ModalContext";
+import type { School } from "@/types";
 import "../../schools.css";
 
 export default function SchoolsPage() {
@@ -36,19 +40,19 @@ export default function SchoolsPage() {
           try {
             const success = await deleteSchool(school.id);
             if (success) {
-              setSchools(schools.filter(s => s.id !== school.id));
+              setSchools(schools.filter((s) => s.id !== school.id));
               closeModal();
             } else {
-              alert('Error al eliminar el colegio');
+              alert("Error al eliminar el colegio");
             }
           } catch (error) {
-            console.error('Error al eliminar colegio:', error);
-            alert('Error al eliminar el colegio');
+            console.error("Error al eliminar colegio:", error);
+            alert("Error al eliminar el colegio");
           }
         }}
         onCancel={closeModal}
       />,
-      '⚠️ Confirmar eliminación'
+      "⚠️ Confirmar eliminación"
     );
   };
 
@@ -86,8 +90,8 @@ export default function SchoolsPage() {
           </p>
         </header>
 
-        <SchoolList 
-          schools={schools} 
+        <SchoolList
+          schools={schools}
           onDelete={handleDeleteSchool}
           onConfigSchedule={(school) => setSelectedSchool(school)}
         />

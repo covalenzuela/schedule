@@ -52,16 +52,20 @@ export default function SchedulesPage() {
   const schools = React.useMemo(() => {
     const allItems = [...courses, ...teachers];
     const schoolMap = new Map();
-    
+
     allItems.forEach((item: any) => {
       if (item.school && item.school.id) {
         schoolMap.set(item.school.id, item.school);
       }
     });
-    
+
     const uniqueSchools = Array.from(schoolMap.values());
-    console.log('[Schedules] Total items:', allItems.length);
-    console.log('[Schedules] Unique schools:', uniqueSchools.length, uniqueSchools);
+    console.log("[Schedules] Total items:", allItems.length);
+    console.log(
+      "[Schedules] Unique schools:",
+      uniqueSchools.length,
+      uniqueSchools
+    );
     return uniqueSchools;
   }, [courses, teachers]);
 
@@ -88,7 +92,7 @@ export default function SchedulesPage() {
         ]);
         setCourses(coursesData);
         setTeachers(teachersData);
-        
+
         // Auto-seleccionar el primer colegio si hay datos
         if (coursesData.length > 0) {
           setSelectedSchoolId((coursesData[0].school as any).id);
@@ -300,7 +304,9 @@ export default function SchedulesPage() {
           <div className="selected-school-info">
             <div className="selected-school-icon">🏫</div>
             <div className="selected-school-details">
-              <h2 className="selected-school-name">{(selectedSchool as any).name}</h2>
+              <h2 className="selected-school-name">
+                {(selectedSchool as any).name}
+              </h2>
               <p className="selected-school-meta">
                 {activeView === "course"
                   ? `${filteredCourses.length} ${

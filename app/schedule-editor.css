@@ -119,32 +119,56 @@
 }
 
 .schedule-toolbar-btn.primary {
-  background: linear-gradient(135deg, rgba(13, 139, 255, 0.3), rgba(139, 92, 246, 0.3));
+  background: linear-gradient(
+    135deg,
+    rgba(13, 139, 255, 0.3),
+    rgba(139, 92, 246, 0.3)
+  );
   border-color: rgba(13, 139, 255, 0.5);
 }
 
 .schedule-toolbar-btn.primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, rgba(13, 139, 255, 0.4), rgba(139, 92, 246, 0.4));
+  background: linear-gradient(
+    135deg,
+    rgba(13, 139, 255, 0.4),
+    rgba(139, 92, 246, 0.4)
+  );
   box-shadow: 0 8px 20px rgba(13, 139, 255, 0.3);
 }
 
 .schedule-toolbar-btn.success {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(16, 185, 129, 0.3));
+  background: linear-gradient(
+    135deg,
+    rgba(34, 197, 94, 0.3),
+    rgba(16, 185, 129, 0.3)
+  );
   border-color: rgba(34, 197, 94, 0.5);
 }
 
 .schedule-toolbar-btn.success:hover:not(:disabled) {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.4), rgba(16, 185, 129, 0.4));
+  background: linear-gradient(
+    135deg,
+    rgba(34, 197, 94, 0.4),
+    rgba(16, 185, 129, 0.4)
+  );
   box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
 }
 
 .schedule-toolbar-btn.danger {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.3));
+  background: linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.3),
+    rgba(220, 38, 38, 0.3)
+  );
   border-color: rgba(239, 68, 68, 0.5);
 }
 
 .schedule-toolbar-btn.danger:hover {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(220, 38, 38, 0.4));
+  background: linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.4),
+    rgba(220, 38, 38, 0.4)
+  );
   box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
 }
 
@@ -163,20 +187,20 @@
 .schedule-save-status.saving {
   background: rgba(59, 130, 246, 0.1);
   border: 1px solid rgba(59, 130, 246, 0.3);
-  color: #60A5FA;
+  color: #60a5fa;
 }
 
 .schedule-save-status.saved {
   background: rgba(34, 197, 94, 0.1);
   border: 1px solid rgba(34, 197, 94, 0.3);
-  color: #4ADE80;
+  color: #4ade80;
   animation: fadeIn 0.3s ease;
 }
 
 .schedule-save-status.error {
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #F87171;
+  color: #f87171;
   animation: shake 0.5s ease;
 }
 
@@ -184,7 +208,7 @@
   width: 16px;
   height: 16px;
   border: 2px solid rgba(96, 165, 250, 0.3);
-  border-top-color: #60A5FA;
+  border-top-color: #60a5fa;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -207,7 +231,8 @@
 }
 
 @keyframes shake {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateX(0);
   }
   25% {
@@ -301,12 +326,52 @@
   cursor: pointer;
   transition: all 0.2s ease;
   border: 2px solid rgba(0, 0, 0, 0.1);
+  position: relative;
 }
 
 .schedule-editor-block:hover {
   transform: scale(1.02);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Bloque con conflicto de disponibilidad */
+.schedule-editor-block.has-conflict {
+  border: 2px solid rgba(255, 152, 0, 0.7);
+  box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.2);
+  animation: conflictPulse 2s ease-in-out infinite;
+}
+
+.schedule-editor-block.has-conflict:hover {
+  border-color: rgba(255, 152, 0, 0.9);
+  box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+}
+
+@keyframes conflictPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(255, 152, 0, 0.3);
+  }
+}
+
+.schedule-editor-block-warning {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  font-size: 1rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  animation: warningBounce 2s ease-in-out infinite;
+}
+
+@keyframes warningBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
 }
 
 .schedule-editor-block-subject {
@@ -714,7 +779,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
@@ -789,7 +855,7 @@
 }
 
 .schedule-editor-cell.lunch-break::after {
-  content: '🍽️ Almuerzo';
+  content: "🍽️ Almuerzo";
   position: absolute;
   inset: 0;
   display: flex;
@@ -804,7 +870,6 @@
 .schedule-editor-cell.lunch-break:hover {
   transform: none;
 }
-
 
 /* Scrollbar personalizada para la paleta */
 .subject-palette::-webkit-scrollbar {
@@ -830,7 +895,7 @@
   .schedule-editor-with-palette {
     flex-direction: column;
   }
-  
+
   .subject-palette {
     width: 100%;
     max-height: 300px;
@@ -1106,6 +1171,3 @@
     grid-template-columns: 1fr;
   }
 }
-
-
-

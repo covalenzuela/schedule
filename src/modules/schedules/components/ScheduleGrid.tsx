@@ -1,13 +1,13 @@
 /**
  * 🗓️ Componente ScheduleGrid - Sistema de Horarios
- * 
+ *
  * Grilla visual de horario semanal con diseño pastel
  * Muestra horarios de Lunes a Viernes con bloques de tiempo
  */
 
-'use client';
+"use client";
 
-import { useMemo } from 'react';
+import { useMemo } from "react";
 import {
   Schedule,
   ScheduleBlock,
@@ -15,15 +15,19 @@ import {
   DayOfWeek,
   DAYS_OF_WEEK,
   DAY_LABELS,
-} from '@/types';
-import { Card } from '@/components/ui';
-import { cn } from '@/lib/utils/cn';
-import { formatTime, getSubjectColor } from '@/lib/utils/schedule';
+} from "@/types";
+import { Card } from "@/components/ui";
+import { cn } from "@/lib/utils/cn";
+import { formatTime, getSubjectColor } from "@/lib/utils/schedule";
 
 export interface ScheduleGridProps {
   schedule: Schedule;
   timeBlocks: TimeBlock[];
-  onBlockClick?: (block: ScheduleBlock | null, day: DayOfWeek, timeBlock: TimeBlock) => void;
+  onBlockClick?: (
+    block: ScheduleBlock | null,
+    day: DayOfWeek,
+    timeBlock: TimeBlock
+  ) => void;
   showConflicts?: boolean;
 }
 
@@ -118,7 +122,11 @@ interface ScheduleCellProps {
   block: ScheduleBlock | null;
   day: DayOfWeek;
   timeBlock: TimeBlock;
-  onClick?: (block: ScheduleBlock | null, day: DayOfWeek, timeBlock: TimeBlock) => void;
+  onClick?: (
+    block: ScheduleBlock | null,
+    day: DayOfWeek,
+    timeBlock: TimeBlock
+  ) => void;
 }
 
 function ScheduleCell({ block, day, timeBlock, onClick }: ScheduleCellProps) {
@@ -141,7 +149,7 @@ function ScheduleCell({ block, day, timeBlock, onClick }: ScheduleCellProps) {
     <button
       onClick={() => onClick?.(block, day, timeBlock)}
       className={cn(
-        'min-h-20 rounded-lg border-2 p-3 text-left transition-all duration-200 cursor-pointer hover:shadow-md',
+        "min-h-20 rounded-lg border-2 p-3 text-left transition-all duration-200 cursor-pointer hover:shadow-md",
         colorClass
       )}
     >
@@ -153,9 +161,7 @@ function ScheduleCell({ block, day, timeBlock, onClick }: ScheduleCellProps) {
           👨‍🏫 {block.teacherId}
         </div>
         {block.classroom && (
-          <div className="text-xs opacity-70">
-            🚪 {block.classroom}
-          </div>
+          <div className="text-xs opacity-70">🚪 {block.classroom}</div>
         )}
       </div>
     </button>

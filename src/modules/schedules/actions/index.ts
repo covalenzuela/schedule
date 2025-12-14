@@ -1,17 +1,25 @@
-'use server';
+"use server";
 
-import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/session';
-import { revalidatePath } from 'next/cache';
+import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/session";
+import { revalidatePath } from "next/cache";
 
 // Funciones auxiliares
-async function findOrCreateSubject(schoolId: string, name: string, color: string) {
+async function findOrCreateSubject(
+  schoolId: string,
+  name: string,
+  color: string
+) {
   let subject = await prisma.subject.findFirst({
     where: { schoolId, name },
   });
 
   if (!subject) {
-    const code = name.substring(0, 3).toUpperCase().replace(/\s/g, '').padEnd(3, 'X');
+    const code = name
+      .substring(0, 3)
+      .toUpperCase()
+      .replace(/\s/g, "")
+      .padEnd(3, "X");
     subject = await prisma.subject.create({
       data: {
         schoolId,
@@ -25,9 +33,12 @@ async function findOrCreateSubject(schoolId: string, name: string, color: string
   return subject;
 }
 
-async function findOrCreateTeacher(schoolId: string, fullName: string): Promise<string> {
-  const [firstName, ...lastNameParts] = fullName.split(' ');
-  const lastName = lastNameParts.join(' ') || firstName;
+async function findOrCreateTeacher(
+  schoolId: string,
+  fullName: string
+): Promise<string> {
+  const [firstName, ...lastNameParts] = fullName.split(" ");
+  const lastName = lastNameParts.join(" ") || firstName;
 
   let teacher = await prisma.teacher.findFirst({
     where: {
@@ -51,7 +62,10 @@ async function findOrCreateTeacher(schoolId: string, fullName: string): Promise<
   return teacher.id;
 }
 
-async function findOrCreateCourse(schoolId: string, name: string): Promise<string | null> {
+async function findOrCreateCourse(
+  schoolId: string,
+  name: string
+): Promise<string | null> {
   let course = await prisma.course.findFirst({
     where: { schoolId, name },
   });
@@ -63,9 +77,9 @@ async function findOrCreateCourse(schoolId: string, name: string): Promise<strin
       data: {
         schoolId,
         name,
-        grade: '1',
-        section: 'A',
-        academicLevel: 'SECONDARY',
+        grade: "1",
+        section: "A",
+        academicLevel: "SECONDARY",
         academicYear: year,
       },
     });
@@ -75,13 +89,13 @@ async function findOrCreateCourse(schoolId: string, name: string): Promise<strin
 }
 
 function calculateDuration(startTime: string, endTime: string): number {
-  const [startHour, startMin] = startTime.split(':').map(Number);
-  const [endHour, endMin] = endTime.split(':').map(Number);
-  return (endHour * 60 + endMin) - (startHour * 60 + startMin);
+  const [startHour, startMin] = startTime.split(":").map(Number);
+  const [endHour, endMin] = endTime.split(":").map(Number);
+  return endHour * 60 + endMin - (startHour * 60 + startMin);
 }
 
 function calculateBlockNumber(startTime: string): number {
-  const [startHour, startMin] = startTime.split(':').map(Number);
+  const [startHour, startMin] = startTime.split(":").map(Number);
   return Math.floor((startHour - 9) * 2 + startMin / 30) + 1;
 }
 
@@ -103,12 +117,14 @@ export async function getSchedulesForCourse(courseId: string) {
   try {
     const session = await getSession();
     if (!session?.id) {
-      throw new Error('No autorizado');
+      throw new Error("No autorizado");
     }
 
     const currentYear = new Date().getFullYear();
 
-    console.log(`[getSchedulesForCourse] Buscando schedules para curso: ${courseId}, año: ${currentYear}`);
+    console.log(
+      `[getSchedulesForCourse] Buscando schedules para curso: ${courseId}, año: ${currentYear}`
+    );
 
     const schedules = await prisma.schedule.findMany({
       where: {
@@ -122,30 +138,36 @@ export async function getSchedulesForCourse(courseId: string) {
             subject: true,
             teacher: true,
           },
-          orderBy: [
-            { dayOfWeek: 'asc' },
-            { startTime: 'asc' },
-          ],
+          orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
       take: 1, // Solo tomar el más reciente
     });
 
-    console.log(`[getSchedulesForCourse] Encontrados ${schedules.length} schedules`);
+    console.log(
+      `[getSchedulesForCourse] Encontrados ${schedules.length} schedules`
+    );
     if (schedules.length > 0) {
-      console.log(`[getSchedulesForCourse] Schedule ID: ${schedules[0].id}, Bloques: ${schedules[0].blocks.length}`);
-      console.log(`[getSchedulesForCourse] Bloques detalles:`, schedules[0].blocks.map(b => `${b.dayOfWeek} ${b.startTime}-${b.endTime} ${b.subject.name}`));
+      console.log(
+        `[getSchedulesForCourse] Schedule ID: ${schedules[0].id}, Bloques: ${schedules[0].blocks.length}`
+      );
+      console.log(
+        `[getSchedulesForCourse] Bloques detalles:`,
+        schedules[0].blocks.map(
+          (b) => `${b.dayOfWeek} ${b.startTime}-${b.endTime} ${b.subject.name}`
+        )
+      );
     }
 
     // Revalidar la ruta para asegurar datos frescos
-    revalidatePath('/schedules');
+    revalidatePath("/schedules");
 
     return schedules;
   } catch (error) {
-    console.error('Error obteniendo horarios:', error);
+    console.error("Error obteniendo horarios:", error);
     throw error;
   }
 }
@@ -157,7 +179,7 @@ export async function getSchedulesForTeacher(teacherId: string) {
   try {
     const session = await getSession();
     if (!session?.id) {
-      throw new Error('No autorizado');
+      throw new Error("No autorizado");
     }
 
     // Obtener todos los bloques donde este profesor está asignado
@@ -173,15 +195,12 @@ export async function getSchedulesForTeacher(teacherId: string) {
         course: true,
         schedule: true,
       },
-      orderBy: [
-        { dayOfWeek: 'asc' },
-        { startTime: 'asc' },
-      ],
+      orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
     });
 
     return blocks;
   } catch (error) {
-    console.error('Error obteniendo horarios del profesor:', error);
+    console.error("Error obteniendo horarios del profesor:", error);
     throw error;
   }
 }
@@ -191,13 +210,13 @@ export async function getSchedulesForTeacher(teacherId: string) {
  */
 export async function saveSchedule(data: {
   entityId: string;
-  entityType: 'course' | 'teacher';
+  entityType: "course" | "teacher";
   blocks: ScheduleBlock[];
 }) {
   try {
     const session = await getSession();
     if (!session?.id) {
-      throw new Error('No autorizado');
+      throw new Error("No autorizado");
     }
 
     const { entityId, entityType, blocks } = data;
@@ -206,7 +225,7 @@ export async function saveSchedule(data: {
     let teacherId: string | undefined;
 
     // Verificar acceso según el tipo de entidad
-    if (entityType === 'course') {
+    if (entityType === "course") {
       const course = await prisma.course.findFirst({
         where: { id: entityId },
         include: {
@@ -221,7 +240,7 @@ export async function saveSchedule(data: {
       });
 
       if (!course || course.school.users.length === 0) {
-        throw new Error('No tienes acceso a este curso');
+        throw new Error("No tienes acceso a este curso");
       }
 
       schoolId = course.schoolId;
@@ -242,7 +261,7 @@ export async function saveSchedule(data: {
       });
 
       if (!teacher || teacher.school.users.length === 0) {
-        throw new Error('No tienes acceso a este profesor');
+        throw new Error("No tienes acceso a este profesor");
       }
 
       schoolId = teacher.schoolId;
@@ -252,13 +271,15 @@ export async function saveSchedule(data: {
     const academicYear = new Date().getFullYear();
 
     // Si es horario de CURSO
-    if (entityType === 'course' && courseId) {
+    if (entityType === "course" && courseId) {
       let schedule = await prisma.schedule.findFirst({
         where: { courseId, academicYear, isActive: true },
       });
 
       if (!schedule) {
-        const course = await prisma.course.findUnique({ where: { id: courseId } });
+        const course = await prisma.course.findUnique({
+          where: { id: courseId },
+        });
         const startDate = new Date(academicYear, 0, 1);
         const endDate = new Date(academicYear, 11, 31);
 
@@ -283,10 +304,14 @@ export async function saveSchedule(data: {
 
       // Crear nuevos bloques (asignando PROFESORES a asignaturas del curso)
       for (const block of blocks) {
-        const subject = await findOrCreateSubject(schoolId, block.subject, block.color);
-        const blockTeacherId = block.teacher 
+        const subject = await findOrCreateSubject(
+          schoolId,
+          block.subject,
+          block.color
+        );
+        const blockTeacherId = block.teacher
           ? await findOrCreateTeacher(schoolId, block.teacher)
-          : '';
+          : "";
 
         const duration = calculateDuration(block.startTime, block.endTime);
         const blockNumber = calculateBlockNumber(block.startTime);
@@ -306,12 +331,12 @@ export async function saveSchedule(data: {
         });
       }
 
-      revalidatePath('/schedules');
+      revalidatePath("/schedules");
       return { success: true, scheduleId: schedule.id };
     }
-    
+
     // Si es horario de PROFESOR
-    if (entityType === 'teacher' && teacherId) {
+    if (entityType === "teacher" && teacherId) {
       // Eliminar todos los bloques donde este profesor está asignado
       await prisma.scheduleBlock.deleteMany({
         where: { teacherId },
@@ -321,7 +346,11 @@ export async function saveSchedule(data: {
       for (const block of blocks) {
         if (!block.course) continue;
 
-        const subject = await findOrCreateSubject(schoolId, block.subject, block.color);
+        const subject = await findOrCreateSubject(
+          schoolId,
+          block.subject,
+          block.color
+        );
         const blockCourseId = await findOrCreateCourse(schoolId, block.course);
 
         if (!blockCourseId) continue;
@@ -332,7 +361,9 @@ export async function saveSchedule(data: {
         });
 
         if (!schedule) {
-          const course = await prisma.course.findUnique({ where: { id: blockCourseId } });
+          const course = await prisma.course.findUnique({
+            where: { id: blockCourseId },
+          });
           const startDate = new Date(academicYear, 0, 1);
           const endDate = new Date(academicYear, 11, 31);
 
@@ -368,13 +399,13 @@ export async function saveSchedule(data: {
         });
       }
 
-      revalidatePath('/schedules');
+      revalidatePath("/schedules");
       return { success: true };
     }
 
-    throw new Error('Tipo de entidad no válido');
+    throw new Error("Tipo de entidad no válido");
   } catch (error) {
-    console.error('Error guardando horario:', error);
+    console.error("Error guardando horario:", error);
     throw error;
   }
 }
@@ -386,7 +417,7 @@ export async function deleteSchedule(scheduleId: string) {
   try {
     const session = await getSession();
     if (!session?.id) {
-      throw new Error('No autorizado');
+      throw new Error("No autorizado");
     }
 
     // Verificar acceso
@@ -402,7 +433,7 @@ export async function deleteSchedule(scheduleId: string) {
     });
 
     if (!schedule) {
-      throw new Error('No tienes acceso a este horario');
+      throw new Error("No tienes acceso a este horario");
     }
 
     // Los bloques se eliminan en cascada
@@ -410,10 +441,10 @@ export async function deleteSchedule(scheduleId: string) {
       where: { id: scheduleId },
     });
 
-    revalidatePath('/schedules');
+    revalidatePath("/schedules");
     return { success: true };
   } catch (error) {
-    console.error('Error eliminando horario:', error);
+    console.error("Error eliminando horario:", error);
     throw error;
   }
 }
@@ -425,7 +456,7 @@ export async function countSchedules() {
   try {
     const session = await getSession();
     if (!session?.id) {
-      throw new Error('No autorizado');
+      throw new Error("No autorizado");
     }
 
     const count = await prisma.schedule.count({
@@ -441,7 +472,7 @@ export async function countSchedules() {
 
     return count;
   } catch (error) {
-    console.error('Error contando horarios:', error);
+    console.error("Error contando horarios:", error);
     return 0;
   }
 }

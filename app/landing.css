@@ -130,10 +130,12 @@
 .landing-hero-gradient {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 0%, 
-    rgba(13, 139, 255, 0.15) 0%, 
-    rgba(168, 85, 247, 0.08) 40%, 
-    transparent 70%);
+  background: radial-gradient(
+    circle at 50% 0%,
+    rgba(13, 139, 255, 0.15) 0%,
+    rgba(168, 85, 247, 0.08) 40%,
+    transparent 70%
+  );
 }
 
 .landing-hero-orb {
@@ -172,21 +174,36 @@
 }
 
 @keyframes float {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(50px, -50px) scale(1.1); }
-  50% { transform: translate(-30px, 30px) scale(0.9); }
-  75% { transform: translate(40px, 50px) scale(1.05); }
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(50px, -50px) scale(1.1);
+  }
+  50% {
+    transform: translate(-30px, 30px) scale(0.9);
+  }
+  75% {
+    transform: translate(40px, 50px) scale(1.05);
+  }
 }
 
 .landing-hero-grid {
   position: absolute;
   inset: 0;
-  background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+  background-image: linear-gradient(
+      rgba(255, 255, 255, 0.02) 1px,
+      transparent 1px
+    ),
     linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
   background-size: 50px 50px;
   mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
-  -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
+  -webkit-mask-image: radial-gradient(
+    ellipse at center,
+    black 20%,
+    transparent 70%
+  );
 }
 
 .landing-hero-content {
@@ -219,7 +236,7 @@
 }
 
 .landing-hero-badge-pulse::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   border-radius: 50%;
@@ -228,7 +245,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
     opacity: 1;
   }
@@ -254,10 +272,12 @@
 }
 
 .landing-hero-title-gradient {
-  background: linear-gradient(135deg, 
-    var(--primary-400) 0%, 
-    var(--accent-400) 50%, 
-    var(--secondary-400) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary-400) 0%,
+    var(--accent-400) 50%,
+    var(--secondary-400) 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -379,9 +399,11 @@
 }
 
 .landing-hero-preview-block {
-  background: linear-gradient(135deg, 
-    rgba(13, 139, 255, 0.1), 
-    rgba(168, 85, 247, 0.1));
+  background: linear-gradient(
+    135deg,
+    rgba(13, 139, 255, 0.1),
+    rgba(168, 85, 247, 0.1)
+  );
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 1rem;
   animation: shimmer 2s ease-in-out infinite;
@@ -408,7 +430,8 @@
 }
 
 @keyframes shimmer {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.5;
   }
   50% {
@@ -624,9 +647,11 @@
 /* CTA Section */
 .landing-cta {
   padding: 8rem var(--spacing-6);
-  background: linear-gradient(135deg, 
-    rgba(13, 139, 255, 0.1) 0%, 
-    rgba(168, 85, 247, 0.1) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(13, 139, 255, 0.1) 0%,
+    rgba(168, 85, 247, 0.1) 100%
+  );
 }
 
 .landing-cta-content {
@@ -764,24 +789,24 @@
   .landing-menu {
     display: none;
   }
-  
+
   .landing-hero {
     padding-top: 6rem;
   }
-  
+
   .landing-hero-actions {
     flex-direction: column;
   }
-  
+
   .landing-hero-preview-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .landing-features-grid,
   .landing-pricing-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .landing-stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }

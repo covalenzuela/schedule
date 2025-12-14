@@ -1,11 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getSubjects, createSubject, deleteSubject } from "@/modules/subjects/actions";
+import {
+  getSubjects,
+  createSubject,
+  deleteSubject,
+} from "@/modules/subjects/actions";
 import { getSchools } from "@/modules/schools/actions";
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { useModal } from '@/contexts/ModalContext';
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useModal } from "@/contexts/ModalContext";
 import { Input, Select } from "@/components/ui";
+import { ImportSubjectsModal } from "@/modules/subjects/components/ImportSubjectsModal";
 import type { School } from "@/types";
 import "../../subjects.css";
 
@@ -167,6 +172,7 @@ export default function SubjectsPage() {
   const [subjects, setSubjects] = useState<SubjectWithRelations[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [creationMode, setCreationMode] = useState<"template" | "custom">(
     "template"
   );
@@ -232,16 +238,16 @@ export default function SubjectsPage() {
         onConfirm={async () => {
           try {
             await deleteSubject(subject.id);
-            setSubjects(subjects.filter(s => s.id !== subject.id));
+            setSubjects(subjects.filter((s) => s.id !== subject.id));
             closeModal();
           } catch (error) {
-            console.error('Error al eliminar asignatura:', error);
-            alert('Error al eliminar la asignatura');
+            console.error("Error al eliminar asignatura:", error);
+            alert("Error al eliminar la asignatura");
           }
         }}
         onCancel={closeModal}
       />,
-      '⚠️ Confirmar eliminación'
+      "⚠️ Confirmar eliminación"
     );
   };
 
@@ -296,11 +302,159 @@ export default function SubjectsPage() {
         description: "",
         color: "#3B82F6",
       });
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error al crear la asignatura"
+    } catch (error) {
+      console.error("Error al crear asignatura:", error);
+      setError("Error al crear la asignatura. Por favor intenta nuevamente.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Función para crear grupo completo de asignaturas
+  const handleCreateGroup = async (category: (typeof SUBJECT_TEMPLATES)[0]) => {
+    if (!formData.schoolId) {
+      setError("Por favor selecciona un colegio primero");
+      return;
+    }
+
+    openModal(
+      <ConfirmDialog
+        title="¿Crear grupo de asignaturas?"
+        message={`¿Deseas crear todas las asignaturas de "${category.category}"? Se crearán ${category.subjects.length} asignaturas.`}
+        confirmText="Crear Grupo"
+        cancelText="Cancelar"
+        variant="info"
+        onConfirm={async () => {
+          setIsLoading(true);
+          try {
+            // Crear todas las asignaturas del grupo
+            for (const template of category.subjects) {
+              await createSubject({
+                schoolId: formData.schoolId,
+                name: template.name,
+                code: template.code,
+                description: template.description || undefined,
+                color: template.color || undefined,
+              });
+            }
+
+            // Reload subjects
+            const subjectsData = await getSubjects();
+            setSubjects(subjectsData);
+            closeModal();
+
+            // Mostrar éxito
+            openModal(
+              <div style={{ padding: "2rem", textAlign: "center" }}>
+                <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>✅</div>
+                <h3>¡Grupo creado exitosamente!</h3>
+                <p
+                  style={{ marginTop: "1rem", color: "rgba(255,255,255,0.7)" }}
+                >
+                  Se han creado {category.subjects.length} asignaturas de{" "}
+                  {category.category}
+                </p>
+                <button
+                  onClick={closeModal}
+                  style={{
+                    marginTop: "1.5rem",
+                    padding: "0.75rem 1.5rem",
+                    background: "var(--primary-500)",
+                    border: "none",
+                    borderRadius: "0.5rem",
+                    color: "#fff",
+                    cursor: "pointer",
+                  }}
+                >
+                  Entendido
+                </button>
+              </div>,
+              "✨ Éxito"
+            );
+          } catch (error) {
+            console.error("Error al crear grupo de asignaturas:", error);
+            alert("Error al crear el grupo de asignaturas");
+          } finally {
+            setIsLoading(false);
+          }
+        }}
+        onCancel={closeModal}
+      />,
+      "📚 Confirmar creación"
+    );
+  };
+
+  // Función para importar asignaturas desde Excel
+  const handleImportSubjects = async (
+    importedSubjects: Array<{
+      name: string;
+      code: string;
+      description?: string;
+      color?: string;
+    }>
+  ) => {
+    if (!formData.schoolId) {
+      alert("Por favor selecciona un colegio primero");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const subject of importedSubjects) {
+        try {
+          await createSubject({
+            schoolId: formData.schoolId,
+            name: subject.name,
+            code: subject.code,
+            description: subject.description,
+            color: subject.color,
+          });
+          successCount++;
+        } catch (error) {
+          console.error(`Error al importar ${subject.name}:`, error);
+          errorCount++;
+        }
+      }
+
+      // Reload subjects
+      const subjectsData = await getSubjects();
+      setSubjects(subjectsData);
+      setShowImportModal(false);
+
+      // Mostrar resultado
+      openModal(
+        <div style={{ padding: "2rem", textAlign: "center" }}>
+          <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>
+            {errorCount === 0 ? "✅" : "⚠️"}
+          </div>
+          <h3>Importación completada</h3>
+          <p style={{ marginTop: "1rem", color: "rgba(255,255,255,0.7)" }}>
+            {successCount} asignaturas importadas correctamente
+            {errorCount > 0 && ` · ${errorCount} errores`}
+          </p>
+          <button
+            onClick={closeModal}
+            style={{
+              marginTop: "1.5rem",
+              padding: "0.75rem 1.5rem",
+              background: "var(--primary-500)",
+              border: "none",
+              borderRadius: "0.5rem",
+              color: "#fff",
+              cursor: "pointer",
+            }}
+          >
+            Entendido
+          </button>
+        </div>,
+        "📥 Resultado de importación"
       );
-      console.error(err);
+    } catch (error) {
+      console.error("Error en la importación:", error);
+      alert("Error durante la importación");
     } finally {
       setIsLoading(false);
     }
@@ -316,12 +470,24 @@ export default function SubjectsPage() {
         <header className="schools-header">
           <div className="schools-header-top">
             <h1 className="schools-title">📚 Asignaturas</h1>
-            <button
-              className="schools-add-btn"
-              onClick={() => setShowCreateForm(!showCreateForm)}
-            >
-              {showCreateForm ? "✕ Cancelar" : "+ Agregar Asignatura"}
-            </button>
+            <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+              <button
+                className="schools-add-btn"
+                style={{
+                  background: "linear-gradient(135deg, #10B981, #059669)",
+                }}
+                onClick={() => setShowImportModal(true)}
+                title="Importar desde Excel"
+              >
+                📥 Importar
+              </button>
+              <button
+                className="schools-add-btn"
+                onClick={() => setShowCreateForm(!showCreateForm)}
+              >
+                {showCreateForm ? "✕ Cancelar" : "+ Agregar Asignatura"}
+              </button>
+            </div>
           </div>
           <p className="schools-description">
             {showCreateForm
@@ -329,6 +495,40 @@ export default function SubjectsPage() {
               : "Gestiona las asignaturas disponibles y asígnalas a profesores calificados."}
           </p>
         </header>
+
+        {/* Modal de Importación */}
+        {showImportModal && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.8)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 9999,
+              padding: "1rem",
+            }}
+          >
+            <div
+              style={{
+                background: "rgba(17, 24, 39, 0.98)",
+                borderRadius: "1rem",
+                maxWidth: "900px",
+                width: "100%",
+                maxHeight: "90vh",
+                overflow: "auto",
+                border: "1px solid rgba(255,255,255,0.1)",
+              }}
+            >
+              <ImportSubjectsModal
+                schoolId={formData.schoolId}
+                onImport={handleImportSubjects}
+                onCancel={() => setShowImportModal(false)}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Formulario de creación */}
         {showCreateForm && (
@@ -381,24 +581,61 @@ export default function SubjectsPage() {
                         <h4 className="template-category-title">
                           {category.category}
                         </h4>
-                        <button
-                          type="button"
-                          className="template-category-toggle"
-                          onClick={() => toggleCategory(category.category)}
-                          aria-label={
-                            openCategories[category.category]
-                              ? "Cerrar"
-                              : "Abrir"
-                          }
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "0.5rem",
+                            alignItems: "center",
+                          }}
                         >
-                          <span
-                            className={`toggle-icon ${
-                              openCategories[category.category] ? "open" : ""
-                            }`}
+                          <button
+                            type="button"
+                            className="btn-create-group"
+                            onClick={() => handleCreateGroup(category)}
+                            title={`Crear todas las asignaturas de ${category.category}`}
+                            style={{
+                              padding: "0.5rem 1rem",
+                              background:
+                                "linear-gradient(135deg, var(--primary-500), var(--accent-500))",
+                              border: "none",
+                              borderRadius: "0.5rem",
+                              color: "#fff",
+                              fontSize: "0.875rem",
+                              fontWeight: "600",
+                              cursor: "pointer",
+                              transition: "all 0.2s",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "0.5rem",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = "scale(1.05)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = "scale(1)";
+                            }}
                           >
-                            ▼
-                          </span>
-                        </button>
+                            ✨ Crear Grupo ({category.subjects.length})
+                          </button>
+                          <button
+                            type="button"
+                            className="template-category-toggle"
+                            onClick={() => toggleCategory(category.category)}
+                            aria-label={
+                              openCategories[category.category]
+                                ? "Cerrar"
+                                : "Abrir"
+                            }
+                          >
+                            <span
+                              className={`toggle-icon ${
+                                openCategories[category.category] ? "open" : ""
+                              }`}
+                            >
+                              ▼
+                            </span>
+                          </button>
+                        </div>
                       </div>
                       {openCategories[category.category] && (
                         <div className="template-grid">
@@ -664,7 +901,7 @@ export default function SubjectsPage() {
                       <button className="schools-card-btn schools-card-btn-ghost">
                         Editar
                       </button>
-                      <button 
+                      <button
                         className="schools-card-btn schools-card-btn-danger"
                         onClick={() => handleDeleteSubject(subject)}
                       >

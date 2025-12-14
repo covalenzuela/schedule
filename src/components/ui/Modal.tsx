@@ -1,6 +1,6 @@
 /**
  * 🎭 Modal Component - Componente base reutilizable para modales
- * 
+ *
  * Características:
  * - Overlay con click para cerrar
  * - Animaciones suaves de entrada/salida
@@ -10,11 +10,11 @@
  * - Responsive
  */
 
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useModal } from '@/contexts/ModalContext';
-import './Modal.css';
+import { useEffect } from "react";
+import { useModal } from "@/contexts/ModalContext";
+import "./Modal.css";
 
 export function Modal() {
   const { isOpen, content, title, closeModal } = useModal();
@@ -22,25 +22,25 @@ export function Modal() {
   // Cerrar modal con tecla ESC
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === "Escape" && isOpen) {
         closeModal();
       }
     };
 
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen, closeModal]);
 
   // Prevenir scroll del body cuando el modal está abierto
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     }
 
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, [isOpen]);
 
@@ -51,18 +51,16 @@ export function Modal() {
       <div className="modal-container" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           {title && <h2 className="modal-title">{title}</h2>}
-          <button 
-            onClick={closeModal} 
+          <button
+            onClick={closeModal}
             className="modal-close-btn"
             aria-label="Cerrar modal"
           >
             ✕
           </button>
         </div>
-        
-        <div className="modal-content">
-          {content}
-        </div>
+
+        <div className="modal-content">{content}</div>
       </div>
     </div>
   );

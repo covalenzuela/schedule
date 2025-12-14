@@ -2,7 +2,7 @@
  * 🗑️ ConfirmDialog - Componente para confirmación de acciones destructivas
  */
 
-'use client';
+"use client";
 
 interface ConfirmDialogProps {
   title: string;
@@ -11,41 +11,41 @@ interface ConfirmDialogProps {
   cancelText?: string;
   onConfirm: () => void;
   onCancel: () => void;
-  variant?: 'danger' | 'warning' | 'info';
+  variant?: "danger" | "warning" | "info";
 }
 
 export function ConfirmDialog({
   title,
   message,
-  confirmText = 'Confirmar',
-  cancelText = 'Cancelar',
+  confirmText = "Confirmar",
+  cancelText = "Cancelar",
   onConfirm,
   onCancel,
-  variant = 'danger',
+  variant = "danger",
 }: ConfirmDialogProps) {
   const variantStyles = {
-    danger: 'schools-card-btn-danger',
-    warning: 'schools-card-btn-warning',
-    info: 'schools-card-btn-primary',
+    danger: "schools-card-btn-danger",
+    warning: "schools-card-btn-warning",
+    info: "schools-card-btn-primary",
   };
 
   return (
     <div className="confirm-dialog">
       <div className="confirm-dialog-icon">
-        {variant === 'danger' && '⚠️'}
-        {variant === 'warning' && '⚡'}
-        {variant === 'info' && 'ℹ️'}
+        {variant === "danger" && "⚠️"}
+        {variant === "warning" && "⚡"}
+        {variant === "info" && "ℹ️"}
       </div>
       <h3 className="confirm-dialog-title">{title}</h3>
       <p className="confirm-dialog-message">{message}</p>
       <div className="confirm-dialog-actions">
-        <button 
+        <button
           onClick={onCancel}
           className="schools-card-btn schools-card-btn-ghost"
         >
           {cancelText}
         </button>
-        <button 
+        <button
           onClick={onConfirm}
           className={`schools-card-btn ${variantStyles[variant]}`}
         >

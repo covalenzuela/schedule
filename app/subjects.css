@@ -18,10 +18,12 @@
 .schools-gradient {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 70% 30%, 
-    rgba(13, 139, 255, 0.08) 0%, 
-    rgba(168, 85, 247, 0.04) 40%, 
-    transparent 70%);
+  background: radial-gradient(
+    circle at 70% 30%,
+    rgba(13, 139, 255, 0.08) 0%,
+    rgba(168, 85, 247, 0.04) 40%,
+    transparent 70%
+  );
 }
 
 /* Container */
@@ -269,17 +271,17 @@
   .schools-container {
     padding: 1.5rem var(--spacing-4) 2rem;
   }
-  
+
   .schools-header-top {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .schools-add-btn {
     width: 100%;
     justify-content: center;
   }
-  
+
   .schools-grid {
     grid-template-columns: 1fr;
   }
@@ -486,7 +488,7 @@
 }
 
 .template-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -595,15 +597,15 @@
   .subject-create-section {
     padding: 1.5rem;
   }
-  
+
   .form-row {
     grid-template-columns: 1fr;
   }
-  
+
   .template-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .subject-mode-btn {
     font-size: 0.8rem;
     padding: 0.65rem 1rem;

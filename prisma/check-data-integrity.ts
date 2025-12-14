@@ -1,23 +1,25 @@
 /**
  * 🔍 Script para verificar la integridad de los datos
- * 
+ *
  * Verifica que todos los datos estén correctamente asociados a usuarios
- * 
+ *
  * Ejecutar con: npx tsx prisma/check-data-integrity.ts
  */
 
-import { PrismaClient } from '@prisma/client';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import { PrismaClient } from "@prisma/client";
+import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 
-const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL || 'file:./prisma/dev.db' });
+const adapter = new PrismaBetterSqlite3({
+  url: process.env.DATABASE_URL || "file:./prisma/dev.db",
+});
 
 const prisma = new PrismaClient({
   adapter,
-  log: ['error'],
+  log: ["error"],
 });
 
 async function main() {
-  console.log('🔍 Verificando integridad de datos...\n');
+  console.log("🔍 Verificando integridad de datos...\n");
 
   // Verificar usuarios
   const userCount = await prisma.user.count();
@@ -35,51 +37,51 @@ async function main() {
           user: {
             select: {
               email: true,
-              name: true
-            }
-          }
-        }
+              name: true,
+            },
+          },
+        },
       },
       _count: {
         select: {
           teachers: true,
           subjects: true,
-          courses: true
-        }
-      }
-    }
+          courses: true,
+        },
+      },
+    },
   });
 
-  console.log('\n📊 Desglose de escuelas:\n');
-  
+  console.log("\n📊 Desglose de escuelas:\n");
+
   for (const school of schoolsWithUsers) {
     console.log(`🏫 ${school.name}`);
     console.log(`   ID: ${school.id}`);
     console.log(`   Usuarios asociados: ${school.users.length}`);
-    school.users.forEach(us => {
+    school.users.forEach((us) => {
       console.log(`      - ${us.user.email} (${us.role})`);
     });
     console.log(`   👨‍🏫 Profesores: ${school._count.teachers}`);
     console.log(`   📚 Asignaturas: ${school._count.subjects}`);
     console.log(`   🎓 Cursos: ${school._count.courses}`);
-    console.log('');
+    console.log("");
   }
 
   // Verificar escuelas huérfanas
   const orphanSchools = await prisma.school.findMany({
     where: {
       users: {
-        none: {}
-      }
-    }
+        none: {},
+      },
+    },
   });
 
   if (orphanSchools.length > 0) {
     console.log(`⚠️  ESCUELAS SIN USUARIOS (${orphanSchools.length}):`);
-    orphanSchools.forEach(school => {
+    orphanSchools.forEach((school) => {
       console.log(`   - ${school.name} (ID: ${school.id})`);
     });
-    console.log('\n⚡ Ejecuta el script clean-orphan-data.ts para eliminarlas');
+    console.log("\n⚡ Ejecuta el script clean-orphan-data.ts para eliminarlas");
   }
 
   // Verificar profesores
@@ -94,7 +96,7 @@ async function main() {
   const courseCount = await prisma.course.count();
   console.log(`🎓 Cursos totales: ${courseCount}`);
 
-  console.log('\n✅ Verificación completada');
+  console.log("\n✅ Verificación completada");
 }
 
 main()
@@ -102,7 +104,7 @@ main()
     process.exit(0);
   })
   .catch((error) => {
-    console.error('❌ Error durante la verificación:', error);
+    console.error("❌ Error durante la verificación:", error);
     process.exit(1);
   })
   .finally(async () => {

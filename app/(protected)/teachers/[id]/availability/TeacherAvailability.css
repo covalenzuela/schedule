@@ -1,0 +1,366 @@
+/* Estilos para la página de disponibilidad del profesor */
+
+.availability-page {
+  min-height: 100vh;
+  background: #000;
+  color: #fff;
+  position: relative;
+}
+
+.availability-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.availability-gradient {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 30% 20%,
+    rgba(13, 139, 255, 0.1) 0%,
+    rgba(168, 85, 247, 0.05) 40%,
+    transparent 70%
+  );
+}
+
+.availability-container {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Header */
+.availability-header {
+  margin-bottom: 2rem;
+}
+
+.availability-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.availability-back-btn {
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.75rem;
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.availability-back-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateX(-4px);
+}
+
+.availability-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.availability-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  white-space: nowrap;
+}
+
+.availability-btn-primary {
+  background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+  color: #fff;
+}
+
+.availability-btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(13, 139, 255, 0.4);
+}
+
+.availability-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.availability-btn-secondary {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #10b981;
+}
+
+.availability-btn-secondary:hover {
+  background: rgba(16, 185, 129, 0.3);
+  border-color: rgba(16, 185, 129, 0.6);
+}
+
+.availability-btn-ghost {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.availability-btn-ghost:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.availability-teacher-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+}
+
+.teacher-avatar {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.availability-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.availability-subtitle {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+}
+
+.availability-instructions {
+  padding: 1rem 1.5rem;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 0.75rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Grilla de disponibilidad */
+.availability-grid-wrapper {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  overflow-x: auto;
+}
+
+.availability-grid {
+  display: table;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 700px;
+  width: 100%;
+}
+
+.availability-grid-header {
+  display: table-row;
+}
+
+.availability-grid-row {
+  display: table-row;
+}
+
+.availability-grid-cell {
+  display: table-cell;
+  padding: 0.75rem;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  vertical-align: middle;
+}
+
+.availability-grid-corner {
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.8);
+  border-top-left-radius: 0.75rem;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+
+.availability-grid-day {
+  background: rgba(59, 130, 246, 0.2);
+  font-weight: 700;
+  color: var(--primary-300);
+  font-size: 0.9375rem;
+  min-width: 100px;
+}
+
+.day-short {
+  display: none;
+}
+
+.availability-grid-time {
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.875rem;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+
+.availability-grid-slot {
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+  min-width: 80px;
+  height: 50px;
+  font-size: 1.25rem;
+}
+
+.availability-grid-slot:hover {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.availability-grid-slot.selected {
+  background: rgba(59, 130, 246, 0.4);
+  border-color: rgba(59, 130, 246, 0.6);
+  color: var(--primary-300);
+}
+
+/* Resumen */
+.availability-summary {
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+}
+
+.availability-summary h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.availability-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.availability-summary-day {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.availability-summary-day strong {
+  color: var(--primary-400);
+  font-size: 0.9375rem;
+}
+
+.availability-summary-day span {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.875rem;
+}
+
+/* Loading y Error */
+.availability-loading,
+.availability-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  text-align: center;
+  gap: 1rem;
+}
+
+.spinner {
+  font-size: 3rem;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .availability-container {
+    padding: 1.5rem;
+  }
+
+  .availability-header-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .availability-actions {
+    width: 100%;
+  }
+
+  .availability-btn {
+    flex: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .availability-container {
+    padding: 1rem;
+  }
+
+  .availability-teacher-info {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .availability-title {
+    font-size: 1.5rem;
+  }
+
+  .availability-grid-cell {
+    padding: 0.5rem;
+    min-width: 60px;
+  }
+
+  .day-full {
+    display: none;
+  }
+
+  .day-short {
+    display: inline;
+  }
+
+  .availability-grid-time {
+    font-size: 0.75rem;
+  }
+
+  .availability-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}

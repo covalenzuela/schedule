@@ -35,7 +35,7 @@
 }
 
 .schedule-tab::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
@@ -75,7 +75,8 @@
 }
 
 @keyframes bounce {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {

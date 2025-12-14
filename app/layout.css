@@ -186,10 +186,12 @@
 .auth-gradient {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 0%, 
-    rgba(13, 139, 255, 0.15) 0%, 
-    rgba(168, 85, 247, 0.08) 40%, 
-    transparent 70%);
+  background: radial-gradient(
+    circle at 50% 0%,
+    rgba(13, 139, 255, 0.15) 0%,
+    rgba(168, 85, 247, 0.08) 40%,
+    transparent 70%
+  );
 }
 
 .auth-orb {
@@ -490,7 +492,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Dashboard Layout */
@@ -536,29 +540,31 @@
   .sidebar {
     display: none;
   }
-  
+
   .dashboard-layout {
     margin-left: 0;
   }
-  
+
   .navbar-menu {
     display: none;
   }
-  
+
   .hero-title {
     font-size: 2.5rem;
   }
 }
 
 @media (min-width: 640px) {
-  .app-container, .navbar-container {
+  .app-container,
+  .navbar-container {
     padding-left: var(--spacing-6);
     padding-right: var(--spacing-6);
   }
 }
 
 @media (min-width: 1024px) {
-  .app-container, .navbar-container {
+  .app-container,
+  .navbar-container {
     padding-left: var(--spacing-8);
     padding-right: var(--spacing-8);
   }

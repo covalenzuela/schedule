@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { getCourses, deleteCourse } from '@/modules/courses/actions';
-import { getSchools } from '@/modules/schools/actions';
-import { AddCourseButton } from '@/modules/courses/components/AddCourseButton';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { useModal } from '@/contexts/ModalContext';
-import type { School } from '@/types';
-import '../../courses.css';
-import { Badge } from '@/components/ui/Badge';
-import { Card, CardContent } from '@/components/ui/Card';
-import { Button } from '@/components/ui';
+import { useState, useEffect } from "react";
+import { getCourses, deleteCourse } from "@/modules/courses/actions";
+import { getSchools } from "@/modules/schools/actions";
+import { AddCourseButton } from "@/modules/courses/components/AddCourseButton";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useModal } from "@/contexts/ModalContext";
+import type { School } from "@/types";
+import "../../courses.css";
+import { Badge } from "@/components/ui/Badge";
+import { Card, CardContent } from "@/components/ui/Card";
+import { Button } from "@/components/ui";
 
 type CourseWithRelations = {
   id: string;
@@ -28,7 +28,7 @@ type CourseWithRelations = {
 export default function CoursesPage() {
   const [courses, setCourses] = useState<CourseWithRelations[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
-  const [selectedSchool, setSelectedSchool] = useState<string>('all');
+  const [selectedSchool, setSelectedSchool] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
   const { openModal, closeModal } = useModal();
 
@@ -36,7 +36,7 @@ export default function CoursesPage() {
     const loadData = async () => {
       const [coursesData, schoolsData] = await Promise.all([
         getCourses(),
-        getSchools()
+        getSchools(),
       ]);
       setCourses(coursesData as any);
       setSchools(schoolsData);
@@ -60,25 +60,26 @@ export default function CoursesPage() {
         onConfirm={async () => {
           try {
             await deleteCourse(course.id);
-            setCourses(courses.filter(c => c.id !== course.id));
+            setCourses(courses.filter((c) => c.id !== course.id));
             closeModal();
           } catch (error) {
-            console.error('Error al eliminar curso:', error);
-            alert('Error al eliminar el curso');
+            console.error("Error al eliminar curso:", error);
+            alert("Error al eliminar el curso");
           }
         }}
         onCancel={closeModal}
       />,
-      '⚠️ Confirmar eliminación'
+      "⚠️ Confirmar eliminación"
     );
   };
 
-  const filteredCourses = selectedSchool === 'all' 
-    ? courses 
-    : courses.filter(course => course.schoolId === selectedSchool);
+  const filteredCourses =
+    selectedSchool === "all"
+      ? courses
+      : courses.filter((course) => course.schoolId === selectedSchool);
 
   const getSchoolName = (schoolId: string) => {
-    return schools.find(s => s.id === schoolId)?.name || '';
+    return schools.find((s) => s.id === schoolId)?.name || "";
   };
 
   return (
@@ -86,36 +87,44 @@ export default function CoursesPage() {
       <div className="schools-bg">
         <div className="schools-gradient" />
       </div>
-      
+
       <div className="schools-container">
         <header className="schools-header">
           <div className="schools-header-top">
             <h1 className="schools-title">
               🎓 Cursos
-              {selectedSchool !== 'all' && (
-                <span style={{ 
-                  fontSize: '0.6em', 
-                  fontWeight: 400, 
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  marginLeft: '0.5rem'
-                }}>
+              {selectedSchool !== "all" && (
+                <span
+                  style={{
+                    fontSize: "0.6em",
+                    fontWeight: 400,
+                    color: "rgba(255, 255, 255, 0.7)",
+                    marginLeft: "0.5rem",
+                  }}
+                >
                   - {getSchoolName(selectedSchool)}
                 </span>
               )}
             </h1>
-            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            <div
+              style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}
+            >
               <button
                 className="schools-filter-btn"
                 onClick={() => setShowFilters(!showFilters)}
               >
-                🔍 {showFilters ? 'Ocultar' : 'Filtros'}
+                🔍 {showFilters ? "Ocultar" : "Filtros"}
               </button>
               <AddCourseButton onCourseCreated={reloadCourses} />
             </div>
           </div>
           <p className="schools-description">
-            Administra los cursos, secciones y niveles académicos de la institución.
-            {selectedSchool !== 'all' && ` Mostrando ${filteredCourses.length} curso${filteredCourses.length !== 1 ? 's' : ''}.`}
+            Administra los cursos, secciones y niveles académicos de la
+            institución.
+            {selectedSchool !== "all" &&
+              ` Mostrando ${filteredCourses.length} curso${
+                filteredCourses.length !== 1 ? "s" : ""
+              }.`}
           </p>
 
           {/* Filtros */}
@@ -123,13 +132,13 @@ export default function CoursesPage() {
             <div className="schools-filters">
               <div className="schools-filter-group">
                 <label className="schools-filter-label">Colegio</label>
-                <select 
+                <select
                   className="schools-filter-select"
                   value={selectedSchool}
                   onChange={(e) => setSelectedSchool(e.target.value)}
                 >
                   <option value="all">Todos los colegios</option>
-                  {schools.map(school => (
+                  {schools.map((school) => (
                     <option key={school.id} value={school.id}>
                       {school.name}
                     </option>
@@ -144,10 +153,14 @@ export default function CoursesPage() {
           <div className="schools-empty">
             <div className="schools-empty-icon">🎓</div>
             <p className="schools-empty-title">
-              {selectedSchool === 'all' ? 'No hay cursos registrados' : 'No hay cursos en este colegio'}
+              {selectedSchool === "all"
+                ? "No hay cursos registrados"
+                : "No hay cursos en este colegio"}
             </p>
             <p className="schools-empty-subtitle">
-              {selectedSchool === 'all' ? 'Comienza agregando tu primer curso' : 'Selecciona otro colegio o agrega un curso nuevo'}
+              {selectedSchool === "all"
+                ? "Comienza agregando tu primer curso"
+                : "Selecciona otro colegio o agrega un curso nuevo"}
             </p>
           </div>
         ) : (
@@ -156,10 +169,8 @@ export default function CoursesPage() {
               <div key={course.id} className="schools-card">
                 <div className="schools-card-header">
                   <div>
-                    <h3 className="schools-card-title">
-                      {course.name}
-                    </h3>
-                    {selectedSchool === 'all' && (
+                    <h3 className="schools-card-title">{course.name}</h3>
+                    {selectedSchool === "all" && (
                       <span className="schools-card-school-badge">
                         {course.school.name}
                       </span>
@@ -169,13 +180,13 @@ export default function CoursesPage() {
                     {course.academicLevel}
                   </span>
                 </div>
-                
+
                 <div className="schools-card-info">
                   <div className="schools-card-info-item">
                     <span className="schools-card-info-icon">🏫</span>
                     <span>{course.school.name}</span>
                   </div>
-                  <button 
+                  <button
                     className="schools-card-btn schools-card-btn-danger"
                     onClick={() => handleDeleteCourse(course)}
                   >
@@ -194,14 +205,19 @@ export default function CoursesPage() {
                   {course.schedules.length > 0 && (
                     <div className="schools-card-info-item">
                       <span className="schools-card-info-icon">🗓️</span>
-                      <span>{course.schedules.length} horario{course.schedules.length !== 1 ? 's' : ''}</span>
+                      <span>
+                        {course.schedules.length} horario
+                        {course.schedules.length !== 1 ? "s" : ""}
+                      </span>
                     </div>
                   )}
                 </div>
-                
+
                 <div className="schools-card-footer">
                   <button className="schools-card-btn schools-card-btn-primary">
-                    {course.schedules.length > 0 ? 'Ver Horario' : 'Crear Horario'}
+                    {course.schedules.length > 0
+                      ? "Ver Horario"
+                      : "Crear Horario"}
                   </button>
                   <button className="schools-card-btn schools-card-btn-ghost">
                     Editar
@@ -229,11 +245,11 @@ function CourseCard({ name, level, students, hasSchedule }: CourseCardProps) {
       <CardContent>
         <div className="flex items-start justify-between mb-3">
           <h3 className="text-xl font-bold text-neutral-900">{name}</h3>
-          <Badge variant={hasSchedule ? 'success' : 'warning'}>
-            {hasSchedule ? 'Con horario' : 'Sin horario'}
+          <Badge variant={hasSchedule ? "success" : "warning"}>
+            {hasSchedule ? "Con horario" : "Sin horario"}
           </Badge>
         </div>
-        
+
         <div className="space-y-2 text-sm text-neutral-600 mb-4">
           <p className="flex items-center gap-2">
             <span>📚</span>
@@ -254,7 +270,7 @@ function CourseCard({ name, level, students, hasSchedule }: CourseCardProps) {
             Editar
           </Button>
           <Button variant="primary" size="sm" className="flex-1">
-            {hasSchedule ? 'Ver Horario' : 'Crear Horario'}
+            {hasSchedule ? "Ver Horario" : "Crear Horario"}
           </Button>
         </div>
       </CardContent>

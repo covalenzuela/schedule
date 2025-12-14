@@ -50,7 +50,11 @@
 .schedule-header-row {
   display: grid;
   grid-template-columns: 150px repeat(5, 1fr);
-  background: linear-gradient(135deg, rgba(13, 139, 255, 0.1), rgba(139, 92, 246, 0.1));
+  background: linear-gradient(
+    135deg,
+    rgba(13, 139, 255, 0.1),
+    rgba(139, 92, 246, 0.1)
+  );
   border-bottom: 2px solid rgba(255, 255, 255, 0.2);
 }
 
@@ -146,7 +150,7 @@
 }
 
 .schedule-cell.has-block::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
@@ -198,21 +202,21 @@
   .schedule-grid-table {
     min-width: 900px;
   }
-  
+
   .schedule-time-cell {
     font-size: 0.75rem;
     padding: 0.75rem;
   }
-  
+
   .schedule-day-header {
     font-size: 0.85rem;
     padding: 0.75rem;
   }
-  
+
   .schedule-block-subject {
     font-size: 0.8rem;
   }
-  
+
   .schedule-block-detail {
     font-size: 0.7rem;
   }
@@ -223,37 +227,37 @@
     padding: 1rem;
     border-radius: 1rem;
   }
-  
+
   .schedule-grid-table {
     min-width: 800px;
   }
-  
+
   .schedule-header-row {
     grid-template-columns: 120px repeat(5, 1fr);
   }
-  
+
   .schedule-row {
     grid-template-columns: 120px repeat(5, 1fr);
   }
-  
+
   .schedule-time-cell {
     font-size: 0.7rem;
     padding: 0.5rem;
   }
-  
+
   .schedule-day-header {
     font-size: 0.75rem;
     padding: 0.5rem;
   }
-  
+
   .schedule-cell {
     padding: 0.5rem;
   }
-  
+
   .schedule-block-subject {
     font-size: 0.75rem;
   }
-  
+
   .schedule-block-detail {
     font-size: 0.65rem;
   }

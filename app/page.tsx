@@ -1,4 +1,4 @@
-"use static"; 
+"use static";
 
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
@@ -17,9 +17,15 @@ export default function LandingPage() {
             <span className="landing-logo-text">{siteConfig.name}</span>
           </Link>
           <nav className="landing-menu">
-            <a href="#features" className="landing-menu-link">Características</a>
-            <a href="#pricing" className="landing-menu-link">Precios</a>
-            <a href="#about" className="landing-menu-link">Nosotros</a>
+            <a href="#features" className="landing-menu-link">
+              Características
+            </a>
+            <a href="#pricing" className="landing-menu-link">
+              Precios
+            </a>
+            <a href="#about" className="landing-menu-link">
+              Nosotros
+            </a>
             <Link href="/auth/login">
               <button className="landing-btn-login">Iniciar Sesión</button>
             </Link>
@@ -43,18 +49,23 @@ export default function LandingPage() {
         <div className="landing-hero-content">
           <div className="landing-hero-badge">
             <span className="landing-hero-badge-pulse"></span>
-            <span className="landing-hero-badge-text">✨ El futuro de la gestión de horarios</span>
+            <span className="landing-hero-badge-text">
+              ✨ El futuro de la gestión de horarios
+            </span>
           </div>
 
           <h1 className="landing-hero-title">
             Organiza horarios
             <br />
-            <span className="landing-hero-title-gradient">sin complicaciones</span>
+            <span className="landing-hero-title-gradient">
+              sin complicaciones
+            </span>
           </h1>
 
           <p className="landing-hero-description">
-            La plataforma más avanzada para gestionar horarios escolares. 
-            Automatiza la asignación, detecta conflictos y optimiza recursos con IA.
+            La plataforma más avanzada para gestionar horarios escolares.
+            Automatiza la asignación, detecta conflictos y optimiza recursos con
+            IA.
           </p>
 
           <div className="landing-hero-actions">
@@ -64,8 +75,17 @@ export default function LandingPage() {
               </Button>
             </Link>
             <Link href="#demo">
-              <Button variant="outline" size="lg" className="landing-hero-btn-secondary">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <Button
+                variant="outline"
+                size="lg"
+                className="landing-hero-btn-secondary"
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
                   <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
                 </svg>
                 Ver Demo
@@ -86,7 +106,9 @@ export default function LandingPage() {
                   <span></span>
                   <span></span>
                 </div>
-                <span className="landing-hero-preview-title">dashboard.{siteConfig.domain}</span>
+                <span className="landing-hero-preview-title">
+                  dashboard.{siteConfig.domain}
+                </span>
               </div>
               <div className="landing-hero-preview-content">
                 <div className="landing-hero-preview-grid">
@@ -107,7 +129,9 @@ export default function LandingPage() {
       <section id="features" className="landing-features">
         <div className="landing-section-header">
           <h2 className="landing-section-title">Todo lo que necesitas</h2>
-          <p className="landing-section-subtitle">Herramientas poderosas diseñadas para simplificar tu trabajo</p>
+          <p className="landing-section-subtitle">
+            Herramientas poderosas diseñadas para simplificar tu trabajo
+          </p>
         </div>
 
         <div className="landing-features-grid">
@@ -115,38 +139,46 @@ export default function LandingPage() {
             {
               icon: "🤖",
               title: "Asignación Inteligente",
-              description: "Algoritmos de IA que optimizan automáticamente la asignación de profesores y aulas."
+              description:
+                "Algoritmos de IA que optimizan automáticamente la asignación de profesores y aulas.",
             },
             {
               icon: "⚡",
               title: "Detección Instantánea",
-              description: "Identifica conflictos de horarios en tiempo real antes de que sean un problema."
+              description:
+                "Identifica conflictos de horarios en tiempo real antes de que sean un problema.",
             },
             {
               icon: "👥",
               title: "Multi-Institución",
-              description: "Gestiona múltiples colegios desde una única cuenta centralizada."
+              description:
+                "Gestiona múltiples colegios desde una única cuenta centralizada.",
             },
             {
               icon: "📊",
               title: "Analytics Avanzado",
-              description: "Visualiza estadísticas y KPIs de utilización de recursos en tiempo real."
+              description:
+                "Visualiza estadísticas y KPIs de utilización de recursos en tiempo real.",
             },
             {
               icon: "🔄",
               title: "Sincronización en Vivo",
-              description: "Cambios instantáneos sincronizados en todos los dispositivos del equipo."
+              description:
+                "Cambios instantáneos sincronizados en todos los dispositivos del equipo.",
             },
             {
               icon: "🎨",
               title: "Diseño Intuitivo",
-              description: "Interfaz moderna y fácil de usar. Tu equipo estará operando en minutos."
+              description:
+                "Interfaz moderna y fácil de usar. Tu equipo estará operando en minutos.",
             },
           ].map((feature, index) => (
             <div key={index} className="landing-feature-card">
               <div className="landing-feature-icon">{feature.icon}</div>
               <h3 className="landing-feature-title">{feature.title}</h3>
-              <p className="landing-feature-description">{feature.description}</p>
+              <p className="landing-feature-description">
+                {feature.description}
+              </p>
             </div>
           ))}
         </div>
@@ -172,8 +204,12 @@ export default function LandingPage() {
       {/* Pricing Section */}
       <section id="pricing" className="landing-pricing">
         <div className="landing-section-header">
-          <h2 className="landing-section-title">Precios simples y transparentes</h2>
-          <p className="landing-section-subtitle">Elige el plan perfecto para tu institución</p>
+          <h2 className="landing-section-title">
+            Precios simples y transparentes
+          </h2>
+          <p className="landing-section-subtitle">
+            Elige el plan perfecto para tu institución
+          </p>
         </div>
 
         <div className="landing-pricing-grid">
@@ -228,14 +264,18 @@ export default function LandingPage() {
           ].map((plan, index) => (
             <div
               key={index}
-              className={`landing-pricing-card ${plan.popular ? 'landing-pricing-card-popular' : ''}`}
+              className={`landing-pricing-card ${
+                plan.popular ? "landing-pricing-card-popular" : ""
+              }`}
             >
               {plan.popular && (
                 <div className="landing-pricing-badge">Más Popular</div>
               )}
               <div className="landing-pricing-header">
                 <h3 className="landing-pricing-name">{plan.name}</h3>
-                <p className="landing-pricing-description">{plan.description}</p>
+                <p className="landing-pricing-description">
+                  {plan.description}
+                </p>
                 <div className="landing-pricing-price">
                   <span className="landing-pricing-amount">{plan.price}</span>
                   <span className="landing-pricing-period">{plan.period}</span>
@@ -244,17 +284,26 @@ export default function LandingPage() {
               <ul className="landing-pricing-features">
                 {plan.features.map((feature, featureIndex) => (
                   <li key={featureIndex}>
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                     <span>{feature}</span>
                   </li>
                 ))}
               </ul>
               <Link href="/auth/register">
-                <Button 
-                  variant={plan.popular ? "primary" : "outline"} 
-                  className="w-full" 
+                <Button
+                  variant={plan.popular ? "primary" : "outline"}
+                  className="w-full"
                   size="lg"
                 >
                   {plan.cta}
@@ -268,7 +317,9 @@ export default function LandingPage() {
       {/* CTA Section */}
       <section className="landing-cta">
         <div className="landing-cta-content">
-          <h2 className="landing-cta-title">¿Listo para revolucionar tus horarios?</h2>
+          <h2 className="landing-cta-title">
+            ¿Listo para revolucionar tus horarios?
+          </h2>
           <p className="landing-cta-description">
             Únete a cientos de instituciones que ya confían en {siteConfig.name}
           </p>
@@ -279,7 +330,11 @@ export default function LandingPage() {
               </Button>
             </Link>
             <Link href="#contact">
-              <Button size="lg" variant="ghost" className="landing-cta-btn-secondary">
+              <Button
+                size="lg"
+                variant="ghost"
+                className="landing-cta-btn-secondary"
+              >
                 Hablar con Ventas
               </Button>
             </Link>
@@ -294,33 +349,49 @@ export default function LandingPage() {
             <div className="landing-footer-brand">
               <div className="landing-footer-logo">
                 <div className="landing-footer-logo-icon">📅</div>
-                <span className="landing-footer-logo-text">{siteConfig.name}</span>
+                <span className="landing-footer-logo-text">
+                  {siteConfig.name}
+                </span>
               </div>
-              <p className="landing-footer-tagline">
-                {siteConfig.tagline}
-              </p>
+              <p className="landing-footer-tagline">{siteConfig.tagline}</p>
             </div>
             <div className="landing-footer-links">
               <h4>Producto</h4>
               <ul>
-                <li><a href="#features">Características</a></li>
-                <li><a href="#pricing">Precios</a></li>
-                <li><a href="#demo">Demo</a></li>
+                <li>
+                  <a href="#features">Características</a>
+                </li>
+                <li>
+                  <a href="#pricing">Precios</a>
+                </li>
+                <li>
+                  <a href="#demo">Demo</a>
+                </li>
               </ul>
             </div>
             <div className="landing-footer-links">
               <h4>Empresa</h4>
               <ul>
-                <li><a href="#about">Nosotros</a></li>
-                <li><a href="#contact">Contacto</a></li>
-                <li><a href="#blog">Blog</a></li>
+                <li>
+                  <a href="#about">Nosotros</a>
+                </li>
+                <li>
+                  <a href="#contact">Contacto</a>
+                </li>
+                <li>
+                  <a href="#blog">Blog</a>
+                </li>
               </ul>
             </div>
             <div className="landing-footer-links">
               <h4>Legal</h4>
               <ul>
-                <li><a href="#privacy">Privacidad</a></li>
-                <li><a href="#terms">Términos</a></li>
+                <li>
+                  <a href="#privacy">Privacidad</a>
+                </li>
+                <li>
+                  <a href="#terms">Términos</a>
+                </li>
               </ul>
             </div>
           </div>

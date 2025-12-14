@@ -3,12 +3,12 @@
  * Mantiene solo el schedule más reciente por curso/año académico
  */
 
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
 async function cleanDuplicateSchedules() {
-  console.log('🧹 Iniciando limpieza de schedules duplicados...\n');
+  console.log("🧹 Iniciando limpieza de schedules duplicados...\n");
 
   try {
     // Obtener todos los cursos
@@ -31,51 +31,57 @@ async function cleanDuplicateSchedules() {
           blocks: true,
         },
         orderBy: {
-          createdAt: 'desc',
+          createdAt: "desc",
         },
       });
 
       if (schedules.length > 1) {
         console.log(`📚 Curso: ${course.name}`);
         console.log(`   Schedules encontrados: ${schedules.length}`);
-        
+
         // Mantener el más reciente (primero en la lista)
         const [keepSchedule, ...duplicates] = schedules;
-        
-        console.log(`   ✅ Manteniendo: ${keepSchedule.name} (${keepSchedule.blocks.length} bloques)`);
-        
+
+        console.log(
+          `   ✅ Manteniendo: ${keepSchedule.name} (${keepSchedule.blocks.length} bloques)`
+        );
+
         // Desactivar los duplicados
         for (const duplicate of duplicates) {
           await prisma.schedule.update({
             where: { id: duplicate.id },
             data: { isActive: false },
           });
-          console.log(`   ❌ Desactivando: ${duplicate.name} (${duplicate.blocks.length} bloques)`);
+          console.log(
+            `   ❌ Desactivando: ${duplicate.name} (${duplicate.blocks.length} bloques)`
+          );
           totalCleaned++;
         }
-        console.log('');
+        console.log("");
       }
     }
 
     console.log(`\n✅ Limpieza completada!`);
-    console.log(`   Total de schedules duplicados desactivados: ${totalCleaned}`);
+    console.log(
+      `   Total de schedules duplicados desactivados: ${totalCleaned}`
+    );
 
     // Mostrar resumen final
     const activeSchedules = await prisma.schedule.count({
       where: { isActive: true, academicYear: currentYear },
     });
-    console.log(`   Schedules activos restantes (${currentYear}): ${activeSchedules}`);
-
+    console.log(
+      `   Schedules activos restantes (${currentYear}): ${activeSchedules}`
+    );
   } catch (error) {
-    console.error('❌ Error durante la limpieza:', error);
+    console.error("❌ Error durante la limpieza:", error);
     throw error;
   } finally {
     await prisma.$disconnect();
   }
 }
 
-cleanDuplicateSchedules()
-  .catch((error) => {
-    console.error('Error fatal:', error);
-    process.exit(1);
-  });
+cleanDuplicateSchedules().catch((error) => {
+  console.error("Error fatal:", error);
+  process.exit(1);
+});

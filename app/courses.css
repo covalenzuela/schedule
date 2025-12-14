@@ -18,10 +18,12 @@
 .schools-gradient {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 70% 30%, 
-    rgba(13, 139, 255, 0.08) 0%, 
-    rgba(168, 85, 247, 0.04) 40%, 
-    transparent 70%);
+  background: radial-gradient(
+    circle at 70% 30%,
+    rgba(13, 139, 255, 0.08) 0%,
+    rgba(168, 85, 247, 0.04) 40%,
+    transparent 70%
+  );
 }
 
 /* Container */
@@ -341,7 +343,7 @@
   border-radius: 2rem;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #60A5FA;
+  color: #60a5fa;
   margin-top: 0.5rem;
 }
 
@@ -350,17 +352,17 @@
   .schools-container {
     padding: 1.5rem var(--spacing-4) 2rem;
   }
-  
+
   .schools-header-top {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .schools-add-btn {
     width: 100%;
     justify-content: center;
   }
-  
+
   .schools-grid {
     grid-template-columns: 1fr;
   }

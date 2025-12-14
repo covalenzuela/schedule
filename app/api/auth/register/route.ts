@@ -1,12 +1,12 @@
-import { NextResponse } from 'next/server';
-import { hash } from 'bcryptjs';
-import { prisma } from '@/lib/prisma';
-import { z } from 'zod';
+import { NextResponse } from "next/server";
+import { hash } from "bcryptjs";
+import { prisma } from "@/lib/prisma";
+import { z } from "zod";
 
 const registerSchema = z.object({
-  name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
-  email: z.string().email('Email inválido'),
-  password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
+  name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
+  email: z.string().email("Email inválido"),
+  password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
 });
 
 export async function POST(request: Request) {
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
     if (existingUser) {
       return NextResponse.json(
-        { error: 'Este email ya está registrado' },
+        { error: "Este email ya está registrado" },
         { status: 400 }
       );
     }
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
         name: validatedData.name,
         email: validatedData.email,
         password: hashedPassword,
-        role: 'user',
+        role: "user",
       },
       select: {
         id: true,
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        message: 'Usuario creado exitosamente',
+        message: "Usuario creado exitosamente",
         user,
       },
       { status: 201 }
@@ -60,14 +60,14 @@ export async function POST(request: Request) {
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json(
-        { error: err.issues[0]?.message || 'Error de validación' },
+        { error: err.issues[0]?.message || "Error de validación" },
         { status: 400 }
       );
     }
 
-    console.error('Error en registro:', err);
+    console.error("Error en registro:", err);
     return NextResponse.json(
-      { error: 'Error al crear la cuenta' },
+      { error: "Error al crear la cuenta" },
       { status: 500 }
     );
   }

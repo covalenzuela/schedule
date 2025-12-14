@@ -2,10 +2,10 @@
  * ➕ AddCourseButton - Botón para abrir el modal de crear curso
  */
 
-'use client';
+"use client";
 
-import { useModal } from '@/contexts/ModalContext';
-import { CreateCourseForm } from './CreateCourseForm';
+import { useModal } from "@/contexts/ModalContext";
+import { CreateCourseForm } from "./CreateCourseForm";
 
 interface AddCourseButtonProps {
   onCourseCreated?: () => void;
@@ -15,7 +15,10 @@ export function AddCourseButton({ onCourseCreated }: AddCourseButtonProps) {
   const { openModal } = useModal();
 
   const handleClick = () => {
-    openModal(<CreateCourseForm onSuccess={onCourseCreated} />, '🎓 Crear Nuevo Curso');
+    openModal(
+      <CreateCourseForm onSuccess={onCourseCreated} />,
+      "🎓 Crear Nuevo Curso"
+    );
   };
 
   return (

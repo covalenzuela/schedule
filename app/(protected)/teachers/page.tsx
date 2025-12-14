@@ -1,21 +1,26 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { getTeachers, deleteTeacher } from '@/modules/teachers/actions';
-import { getSchools } from '@/modules/schools/actions';
-import { AddTeacherButton } from '@/modules/teachers/components/AddTeacherButton';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { Card, Badge, Button } from '@/components/ui';
-import { useModal } from '@/contexts/ModalContext';
-import type { School } from '@/types';
-import '../../teachers.css';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { getTeachers, deleteTeacher, createTeacher } from "@/modules/teachers/actions";
+import { getSchools } from "@/modules/schools/actions";
+import { AddTeacherButton } from "@/modules/teachers/components/AddTeacherButton";
+import { ImportTeachersModal } from "@/modules/teachers/components/ImportTeachersModal";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { Card, Badge, Button } from "@/components/ui";
+import { useModal } from "@/contexts/ModalContext";
+import type { School } from "@/types";
+import "../../teachers.css";
 
 type Teacher = Awaited<ReturnType<typeof getTeachers>>[0];
 
 export default function TeachersPage() {
+  const router = useRouter();
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
-  const [selectedSchool, setSelectedSchool] = useState<string>('all');
+  const [selectedSchool, setSelectedSchool] = useState<string>("all");
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importSchoolId, setImportSchoolId] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const { openModal, closeModal } = useModal();
@@ -27,7 +32,7 @@ export default function TeachersPage() {
   const loadData = async () => {
     const [teachersData, schoolsData] = await Promise.all([
       getTeachers(),
-      getSchools()
+      getSchools(),
     ]);
     setTeachers(teachersData);
     setSchools(schoolsData);
@@ -45,22 +50,176 @@ export default function TeachersPage() {
         onConfirm={async () => {
           try {
             await deleteTeacher(teacher.id);
-            setTeachers(teachers.filter(t => t.id !== teacher.id));
+            setTeachers(teachers.filter((t) => t.id !== teacher.id));
             closeModal();
           } catch (error) {
-            console.error('Error al eliminar profesor:', error);
-            alert('Error al eliminar el profesor');
+            console.error("Error al eliminar profesor:", error);
+            alert("Error al eliminar el profesor");
           }
         }}
         onCancel={closeModal}
       />,
-      '⚠️ Confirmar eliminación'
+      "⚠️ Confirmar eliminación"
     );
   };
 
-  const filteredTeachers = selectedSchool === 'all' 
-    ? teachers 
-    : teachers.filter(t => t.schoolId === selectedSchool);
+  const handleOpenImportModal = () => {
+    // Si hay un solo colegio, auto-seleccionarlo
+    if (schools.length === 1) {
+      setImportSchoolId(schools[0].id);
+      setShowImportModal(true);
+    } else if (schools.length === 0) {
+      alert("Necesitas crear al menos un colegio antes de importar profesores");
+    } else {
+      // Mostrar selector de colegio
+      openModal(
+        <div style={{ padding: '2rem' }}>
+          <h3 style={{ marginBottom: '1rem' }}>Selecciona un colegio</h3>
+          <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: '1.5rem' }}>
+            ¿A qué colegio deseas importar los profesores?
+          </p>
+          <select
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              background: 'rgba(255,255,255,0.1)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: '0.5rem',
+              color: '#fff',
+              fontSize: '1rem',
+              marginBottom: '1.5rem',
+            }}
+            value={importSchoolId}
+            onChange={(e) => setImportSchoolId(e.target.value)}
+          >
+            <option value="">Selecciona un colegio...</option>
+            {schools.map((school) => (
+              <option key={school.id} value={school.id}>
+                {school.name}
+              </option>
+            ))}
+          </select>
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+            <button
+              onClick={closeModal}
+              style={{
+                padding: '0.75rem 1.5rem',
+                background: 'rgba(255,255,255,0.1)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                borderRadius: '0.5rem',
+                color: '#fff',
+                cursor: 'pointer',
+              }}
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => {
+                if (importSchoolId) {
+                  closeModal();
+                  setShowImportModal(true);
+                } else {
+                  alert('Por favor selecciona un colegio');
+                }
+              }}
+              disabled={!importSchoolId}
+              style={{
+                padding: '0.75rem 1.5rem',
+                background: importSchoolId ? 'linear-gradient(135deg, var(--primary-500), var(--accent-500))' : 'rgba(255,255,255,0.1)',
+                border: 'none',
+                borderRadius: '0.5rem',
+                color: '#fff',
+                cursor: importSchoolId ? 'pointer' : 'not-allowed',
+                opacity: importSchoolId ? 1 : 0.5,
+              }}
+            >
+              Continuar
+            </button>
+          </div>
+        </div>,
+        '🏫 Seleccionar Colegio'
+      );
+    }
+  };
+
+  const handleImportTeachers = async (importedTeachers: Array<{
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+    specialization?: string;
+  }>) => {
+    if (!importSchoolId) {
+      alert("Por favor selecciona un colegio primero");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const teacher of importedTeachers) {
+        try {
+          await createTeacher({
+            schoolId: importSchoolId,
+            firstName: teacher.firstName,
+            lastName: teacher.lastName,
+            email: teacher.email,
+            phone: teacher.phone,
+            specialization: teacher.specialization,
+          });
+          successCount++;
+        } catch (error) {
+          console.error(`Error al importar ${teacher.firstName} ${teacher.lastName}:`, error);
+          errorCount++;
+        }
+      }
+
+      // Reload teachers
+      await loadData();
+      setShowImportModal(false);
+
+      // Mostrar resultado
+      openModal(
+        <div style={{ padding: '2rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>
+            {errorCount === 0 ? '✅' : '⚠️'}
+          </div>
+          <h3>Importación completada</h3>
+          <p style={{ marginTop: '1rem', color: 'rgba(255,255,255,0.7)' }}>
+            {successCount} profesores importados correctamente
+            {errorCount > 0 && ` · ${errorCount} errores`}
+          </p>
+          <button 
+            onClick={closeModal}
+            style={{
+              marginTop: '1.5rem',
+              padding: '0.75rem 1.5rem',
+              background: 'var(--primary-500)',
+              border: 'none',
+              borderRadius: '0.5rem',
+              color: '#fff',
+              cursor: 'pointer',
+            }}
+          >
+            Entendido
+          </button>
+        </div>,
+        '📥 Resultado de importación'
+      );
+    } catch (error) {
+      console.error("Error en la importación:", error);
+      alert("Error durante la importación");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const filteredTeachers =
+    selectedSchool === "all"
+      ? teachers
+      : teachers.filter((t) => t.schoolId === selectedSchool);
 
   if (isLoading) {
     return (
@@ -83,19 +242,24 @@ export default function TeachersPage() {
       <div className="schools-bg">
         <div className="schools-gradient" />
       </div>
-      
+
       <div className="schools-container">
         <header className="schools-header">
           <div className="schools-header-top">
-            <h1 className="schools-title">
-              👨‍🏫 Profesores
-            </h1>
+            <h1 className="schools-title">👨‍🏫 Profesores</h1>
             <div className="schools-header-actions">
-              <button 
+              <button
                 className="schools-filter-btn"
                 onClick={() => setShowFilters(!showFilters)}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <line x1="4" y1="21" x2="4" y2="14"></line>
                   <line x1="4" y1="10" x2="4" y2="3"></line>
                   <line x1="12" y1="21" x2="12" y2="12"></line>
@@ -108,27 +272,72 @@ export default function TeachersPage() {
                 </svg>
                 Filtros
               </button>
+              <button
+                className="schools-add-btn"
+                style={{ background: 'linear-gradient(135deg, #10B981, #059669)' }}
+                onClick={handleOpenImportModal}
+                title="Importar desde Excel"
+              >
+                📥 Importar
+              </button>
               <AddTeacherButton onTeacherCreated={loadData} />
             </div>
           </div>
           <p className="schools-description">
-            Administra los profesores, su disponibilidad horaria y las asignaturas que pueden dictar.
+            Administra los profesores, su disponibilidad horaria y las
+            asignaturas que pueden dictar.
           </p>
         </header>
+
+        {/* Modal de Importación */}
+        {showImportModal && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '1rem',
+          }}>
+            <div style={{
+              background: 'rgba(17, 24, 39, 0.98)',
+              borderRadius: '1rem',
+              maxWidth: '900px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              border: '1px solid rgba(255,255,255,0.1)',
+            }}>
+              <ImportTeachersModal
+                schoolId={importSchoolId}
+                onImport={handleImportTeachers}
+                onCancel={() => setShowImportModal(false)}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Panel de filtros */}
         {showFilters && (
           <div className="schools-filters">
             <div className="schools-filter-group">
-              <label className="schools-filter-label">Filtrar por Colegio</label>
-              <select 
+              <label className="schools-filter-label">
+                Filtrar por Colegio
+              </label>
+              <select
                 className="schools-filter-select"
                 value={selectedSchool}
                 onChange={(e) => setSelectedSchool(e.target.value)}
               >
-                <option value="all">Todos los colegios ({teachers.length})</option>
-                {schools.map(school => {
-                  const count = teachers.filter(t => t.schoolId === school.id).length;
+                <option value="all">
+                  Todos los colegios ({teachers.length})
+                </option>
+                {schools.map((school) => {
+                  const count = teachers.filter(
+                    (t) => t.schoolId === school.id
+                  ).length;
                   return (
                     <option key={school.id} value={school.id}>
                       {school.name} ({count})
@@ -137,10 +346,10 @@ export default function TeachersPage() {
                 })}
               </select>
             </div>
-            {selectedSchool !== 'all' && (
-              <button 
+            {selectedSchool !== "all" && (
+              <button
                 className="schools-filter-clear"
-                onClick={() => setSelectedSchool('all')}
+                onClick={() => setSelectedSchool("all")}
               >
                 Limpiar filtros
               </button>
@@ -152,14 +361,14 @@ export default function TeachersPage() {
           <div className="schools-empty">
             <div className="schools-empty-icon">👨‍🏫</div>
             <p className="schools-empty-title">
-              {selectedSchool === 'all' 
-                ? 'No hay profesores registrados' 
-                : 'No hay profesores en este colegio'}
+              {selectedSchool === "all"
+                ? "No hay profesores registrados"
+                : "No hay profesores en este colegio"}
             </p>
             <p className="schools-empty-subtitle">
-              {selectedSchool === 'all'
-                ? 'Comienza agregando tu primer profesor'
-                : 'Intenta con otro colegio o limpia los filtros'}
+              {selectedSchool === "all"
+                ? "Comienza agregando tu primer profesor"
+                : "Intenta con otro colegio o limpia los filtros"}
             </p>
           </div>
         ) : (
@@ -176,10 +385,10 @@ export default function TeachersPage() {
                     </span>
                   </div>
                   <span className="schools-card-badge">
-                    {teacher.specialization || 'Profesor'}
+                    {teacher.specialization || "Profesor"}
                   </span>
                 </div>
-                
+
                 <div className="schools-card-info">
                   <div className="schools-card-info-item">
                     <span className="schools-card-info-icon">✉️</span>
@@ -194,19 +403,26 @@ export default function TeachersPage() {
                   {teacher.teacherSubjects.length > 0 && (
                     <div className="schools-card-info-item">
                       <span className="schools-card-info-icon">📚</span>
-                      <span>{teacher.teacherSubjects.length} asignatura{teacher.teacherSubjects.length !== 1 ? 's' : ''}</span>
+                      <span>
+                        {teacher.teacherSubjects.length} asignatura
+                        {teacher.teacherSubjects.length !== 1 ? "s" : ""}
+                      </span>
                     </div>
                   )}
                 </div>
-                
+
                 <div className="schools-card-footer">
-                  <button className="schools-card-btn schools-card-btn-primary">
-                    Ver Detalles
+                  <button 
+                    className="schools-card-btn schools-card-btn-primary"
+                    onClick={() => router.push(`/teachers/${teacher.id}/availability`)}
+                    title="Gestionar disponibilidad horaria"
+                  >
+                    📅 Disponibilidad
                   </button>
                   <button className="schools-card-btn schools-card-btn-ghost">
                     Editar
                   </button>
-                  <button 
+                  <button
                     className="schools-card-btn schools-card-btn-danger"
                     onClick={() => handleDeleteTeacher(teacher)}
                   >

@@ -147,6 +147,8 @@ export async function getSchoolScheduleConfig(schoolId: string) {
       blockDuration: true,
       breakDuration: true,
       lunchBreakEnabled: true,
+      lunchBreakConfig: true,
+      // Campos legacy por compatibilidad
       lunchBreakStart: true,
       lunchBreakEnd: true,
     },
@@ -154,6 +156,21 @@ export async function getSchoolScheduleConfig(schoolId: string) {
 
   if (!school) {
     throw new Error('Colegio no encontrado');
+  }
+
+  // Parsear configuración de almuerzo por día
+  let lunchBreakByDay: Record<string, {enabled: boolean, start: string, end: string}> = {};
+  try {
+    lunchBreakByDay = JSON.parse(school.lunchBreakConfig);
+  } catch (e) {
+    // Si falla el parsing, usar valores por defecto
+    lunchBreakByDay = {
+      MONDAY: { enabled: school.lunchBreakEnabled, start: school.lunchBreakStart, end: school.lunchBreakEnd },
+      TUESDAY: { enabled: school.lunchBreakEnabled, start: school.lunchBreakStart, end: school.lunchBreakEnd },
+      WEDNESDAY: { enabled: school.lunchBreakEnabled, start: school.lunchBreakStart, end: school.lunchBreakEnd },
+      THURSDAY: { enabled: school.lunchBreakEnabled, start: school.lunchBreakStart, end: school.lunchBreakEnd },
+      FRIDAY: { enabled: school.lunchBreakEnabled, start: school.lunchBreakStart, end: school.lunchBreakEnd },
+    };
   }
 
   return {
@@ -166,6 +183,7 @@ export async function getSchoolScheduleConfig(schoolId: string) {
       startTime: school.lunchBreakStart,
       endTime: school.lunchBreakEnd,
     },
+    lunchBreakByDay, // NUEVO
   };
 }
 
@@ -184,6 +202,7 @@ export async function updateSchoolScheduleConfig(
       startTime: string;
       endTime: string;
     };
+    lunchBreakByDay?: Record<string, {enabled: boolean, start: string, end: string}>; // NUEVO
   }
 ) {
   const hasAccess = await userHasAccessToSchool(schoolId);
@@ -191,17 +210,24 @@ export async function updateSchoolScheduleConfig(
     throw new Error('No tienes acceso a este colegio');
   }
 
+  const updateData: any = {
+    scheduleStartTime: config.startTime,
+    scheduleEndTime: config.endTime,
+    blockDuration: config.blockDuration,
+    breakDuration: config.breakDuration,
+    lunchBreakEnabled: config.lunchBreak.enabled,
+    lunchBreakStart: config.lunchBreak.startTime,
+    lunchBreakEnd: config.lunchBreak.endTime,
+  };
+
+  // Siempre guardar lunchBreakConfig (ya sea con datos o vacío)
+  if (config.lunchBreakByDay !== undefined) {
+    updateData.lunchBreakConfig = JSON.stringify(config.lunchBreakByDay);
+  }
+
   await prisma.school.update({
     where: { id: schoolId },
-    data: {
-      scheduleStartTime: config.startTime,
-      scheduleEndTime: config.endTime,
-      blockDuration: config.blockDuration,
-      breakDuration: config.breakDuration,
-      lunchBreakEnabled: config.lunchBreak.enabled,
-      lunchBreakStart: config.lunchBreak.startTime,
-      lunchBreakEnd: config.lunchBreak.endTime,
-    },
+    data: updateData,
   });
 
   revalidatePath('/schools');

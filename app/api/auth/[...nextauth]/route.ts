@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { compare } from 'bcryptjs';
-import { prisma } from '@/lib/prisma';
-import { createSession } from '@/lib/session';
+import { NextRequest, NextResponse } from "next/server";
+import { compare } from "bcryptjs";
+import { prisma } from "@/lib/prisma";
+import { createSession } from "@/lib/session";
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
 
     if (!email || !password) {
       return NextResponse.json(
-        { error: 'Email y contraseña son requeridos' },
+        { error: "Email y contraseña son requeridos" },
         { status: 400 }
       );
     }
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Credenciales inválidas' },
+        { error: "Credenciales inválidas" },
         { status: 401 }
       );
     }
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     if (!isValid) {
       return NextResponse.json(
-        { error: 'Credenciales inválidas' },
+        { error: "Credenciales inválidas" },
         { status: 401 }
       );
     }
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     await createSession({
       id: user.id,
       email: user.email,
-      name: user.name || '',
+      name: user.name || "",
       role: user.role,
     });
 
@@ -53,9 +53,9 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error("Login error:", error);
     return NextResponse.json(
-      { error: 'Error en el servidor' },
+      { error: "Error en el servidor" },
       { status: 500 }
     );
   }

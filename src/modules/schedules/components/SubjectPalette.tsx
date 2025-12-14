@@ -2,7 +2,7 @@
  * 🎨 SubjectPalette - Paleta lateral de asignaturas con drag and drop
  */
 
-'use client';
+"use client";
 
 interface Subject {
   id: string;
@@ -26,33 +26,40 @@ export function SubjectPalette({ subjects, onDragStart }: SubjectPaletteProps) {
           Arrastra una asignatura al horario
         </p>
       </div>
-      
+
       <div className="subject-palette-list">
         {subjects.length === 0 ? (
           <div className="subject-palette-empty">
             <p>No hay asignaturas disponibles</p>
-            <span style={{ fontSize: '0.875rem', opacity: 0.7 }}>
+            <span style={{ fontSize: "0.875rem", opacity: 0.7 }}>
               Crea asignaturas primero
             </span>
           </div>
         ) : (
           subjects.map((subject) => {
             const hasTeachers = subject.teacherSubjects?.length > 0;
-            
+
             return (
               <div
                 key={subject.id}
-                className={`subject-palette-item ${!hasTeachers ? 'no-teacher' : ''}`}
+                className={`subject-palette-item ${
+                  !hasTeachers ? "no-teacher" : ""
+                }`}
                 draggable
                 onDragStart={() => onDragStart(subject)}
-                style={{
-                  '--subject-color': subject.color || '#3B82F6',
-                } as React.CSSProperties}
+                style={
+                  {
+                    "--subject-color": subject.color || "#3B82F6",
+                  } as React.CSSProperties
+                }
               >
                 <div className="subject-palette-item-header">
                   <span className="subject-palette-code">{subject.code}</span>
                   {!hasTeachers && (
-                    <span className="subject-palette-warning" title="Sin profesor asignado">
+                    <span
+                      className="subject-palette-warning"
+                      title="Sin profesor asignado"
+                    >
                       ⚠️
                     </span>
                   )}
@@ -65,7 +72,8 @@ export function SubjectPalette({ subjects, onDragStart }: SubjectPaletteProps) {
                 )}
                 {hasTeachers && (
                   <div className="subject-palette-item-teachers">
-                    {subject.teacherSubjects.length} profesor{subject.teacherSubjects.length !== 1 ? 'es' : ''}
+                    {subject.teacherSubjects.length} profesor
+                    {subject.teacherSubjects.length !== 1 ? "es" : ""}
                   </div>
                 )}
               </div>
@@ -73,10 +81,10 @@ export function SubjectPalette({ subjects, onDragStart }: SubjectPaletteProps) {
           })
         )}
       </div>
-      
+
       <div className="subject-palette-hint">
-        💡 <strong>Tip:</strong> Arrastra y suelta asignaturas en el horario. 
-        Si no tiene profesor asignado, podrás seleccionarlo después.
+        💡 <strong>Tip:</strong> Arrastra y suelta asignaturas en el horario. Si
+        no tiene profesor asignado, podrás seleccionarlo después.
       </div>
     </div>
   );
