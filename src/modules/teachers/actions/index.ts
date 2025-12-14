@@ -20,6 +20,7 @@ export async function getTeachers() {
     include: {
       school: {
         select: {
+          id: true,
           name: true
         }
       },

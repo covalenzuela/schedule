@@ -2,6 +2,13 @@
  * 📋 Estilos para el accordion de horarios
  */
 
+/* Contenedor de acordeones */
+.schedule-accordion-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 /* Lista de acordeones */
 .schedule-accordion-list {
   display: flex;

@@ -20,6 +20,7 @@ export async function getCourses() {
     include: {
       school: {
         select: {
+          id: true,
           name: true
         }
       },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getCourses } from "@/modules/courses/actions";
 import { getTeachers } from "@/modules/teachers/actions";
@@ -23,6 +23,16 @@ interface DownloadData {
   type: "course" | "teacher";
 }
 
+// Helper para formatear niveles académicos
+const formatAcademicLevel = (level: string): string => {
+  const levels: Record<string, string> = {
+    PRIMARY: "Básica",
+    SECONDARY: "Media",
+    HIGH_SCHOOL: "Superior",
+  };
+  return levels[level] || level;
+};
+
 export default function SchedulesPage() {
   const router = useRouter();
   const [activeView, setActiveView] = useState<ScheduleView>("course");
@@ -36,6 +46,38 @@ export default function SchedulesPage() {
   const [scheduleData, setScheduleData] = useState<Record<string, any>>({});
   const [downloadModalOpen, setDownloadModalOpen] = useState(false);
   const [downloadData, setDownloadData] = useState<DownloadData | null>(null);
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
+
+  // Extraer lista única de colegios
+  const schools = React.useMemo(() => {
+    const allItems = [...courses, ...teachers];
+    const schoolMap = new Map();
+    
+    allItems.forEach((item: any) => {
+      if (item.school && item.school.id) {
+        schoolMap.set(item.school.id, item.school);
+      }
+    });
+    
+    const uniqueSchools = Array.from(schoolMap.values());
+    console.log('[Schedules] Total items:', allItems.length);
+    console.log('[Schedules] Unique schools:', uniqueSchools.length, uniqueSchools);
+    return uniqueSchools;
+  }, [courses, teachers]);
+
+  // Filtrar cursos y profesores por colegio seleccionado
+  const filteredCourses = selectedSchoolId
+    ? courses.filter((course: any) => course.school?.id === selectedSchoolId)
+    : courses;
+
+  const filteredTeachers = selectedSchoolId
+    ? teachers.filter((teacher: any) => teacher.school?.id === selectedSchoolId)
+    : teachers;
+
+  // Obtener el colegio seleccionado
+  const selectedSchool = schools.find(
+    (school: any) => school.id === selectedSchoolId
+  );
 
   useEffect(() => {
     const loadData = async () => {
@@ -46,6 +88,13 @@ export default function SchedulesPage() {
         ]);
         setCourses(coursesData);
         setTeachers(teachersData);
+        
+        // Auto-seleccionar el primer colegio si hay datos
+        if (coursesData.length > 0) {
+          setSelectedSchoolId((coursesData[0].school as any).id);
+        } else if (teachersData.length > 0) {
+          setSelectedSchoolId((teachersData[0].school as any).id);
+        }
       } catch (error) {
         console.error("Error loading data:", error);
       } finally {
@@ -222,6 +271,49 @@ export default function SchedulesPage() {
           </button>
         </div>
 
+        {/* Selector de colegio */}
+        {!loading && schools.length > 0 && (
+          <div className="school-selector-container">
+            <label className="school-selector-label">
+              <span className="school-selector-icon">🏫</span>
+              <span>Colegio:</span>
+            </label>
+            <select
+              className="school-selector"
+              value={selectedSchoolId || ""}
+              onChange={(e) => {
+                setSelectedSchoolId(e.target.value);
+                setExpandedId(null); // Cerrar acordeones al cambiar colegio
+              }}
+            >
+              {schools.map((school: any) => (
+                <option key={school.id} value={school.id}>
+                  {school.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Info del colegio seleccionado */}
+        {!loading && selectedSchool && (
+          <div className="selected-school-info">
+            <div className="selected-school-icon">🏫</div>
+            <div className="selected-school-details">
+              <h2 className="selected-school-name">{(selectedSchool as any).name}</h2>
+              <p className="selected-school-meta">
+                {activeView === "course"
+                  ? `${filteredCourses.length} ${
+                      filteredCourses.length === 1 ? "curso" : "cursos"
+                    }`
+                  : `${filteredTeachers.length} ${
+                      filteredTeachers.length === 1 ? "profesor" : "profesores"
+                    }`}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Loading state */}
         {loading ? (
           <div className="schools-empty">
@@ -231,31 +323,31 @@ export default function SchedulesPage() {
         ) : (
           <>
             {/* Empty state */}
-            {((activeView === "course" && courses.length === 0) ||
-              (activeView === "teacher" && teachers.length === 0)) && (
+            {((activeView === "course" && filteredCourses.length === 0) ||
+              (activeView === "teacher" && filteredTeachers.length === 0)) && (
               <div className="schools-empty">
                 <div className="schools-empty-icon">
                   {activeView === "course" ? "🎓" : "👨‍🏫"}
                 </div>
                 <p className="schools-empty-title">
                   {activeView === "course"
-                    ? "No hay cursos registrados"
-                    : "No hay profesores registrados"}
+                    ? "No hay cursos registrados en este colegio"
+                    : "No hay profesores registrados en este colegio"}
                 </p>
                 <p className="schools-empty-subtitle">
                   {activeView === "course"
-                    ? "Primero debes crear cursos para gestionar sus horarios"
-                    : "Primero debes crear profesores para gestionar sus horarios"}
+                    ? "Selecciona otro colegio o crea cursos para este"
+                    : "Selecciona otro colegio o crea profesores para este"}
                 </p>
               </div>
             )}
 
             {/* Accordion list */}
-            {((activeView === "course" && courses.length > 0) ||
-              (activeView === "teacher" && teachers.length > 0)) && (
+            {((activeView === "course" && filteredCourses.length > 0) ||
+              (activeView === "teacher" && filteredTeachers.length > 0)) && (
               <div className="schedule-accordion-container">
                 {activeView === "course"
-                  ? courses.map((course) => (
+                  ? filteredCourses.map((course) => (
                       <div key={course.id} className="schedule-accordion-item">
                         <div
                           className="schedule-accordion-header"
@@ -268,7 +360,8 @@ export default function SchedulesPage() {
                                 {course.name}
                               </h3>
                               <p className="schedule-accordion-subtitle">
-                                {course.school.name} •{" "}
+                                {course.grade}° {course.section} •{" "}
+                                {formatAcademicLevel(course.academicLevel)} •{" "}
                                 {course.studentCount || 0} estudiantes
                               </p>
                             </div>
@@ -375,7 +468,7 @@ export default function SchedulesPage() {
                         )}
                       </div>
                     ))
-                  : teachers.map((teacher) => (
+                  : filteredTeachers.map((teacher) => (
                       <div key={teacher.id} className="schedule-accordion-item">
                         <div
                           className="schedule-accordion-header"
