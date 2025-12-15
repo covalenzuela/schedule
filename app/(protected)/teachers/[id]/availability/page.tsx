@@ -129,7 +129,7 @@ export default function TeacherAvailabilityPage({
 
       // Convertir disponibilidad a slots seleccionados
       const selectedSet = new Set<string>();
-      availabilityData.forEach((slot) => {
+      availabilityData.forEach((slot: AvailabilitySlot) => {
         console.log('[Availability] Procesando slot:', slot);
         const startIdx = slots.indexOf(slot.startTime);
         const endIdx = slots.indexOf(slot.endTime);
