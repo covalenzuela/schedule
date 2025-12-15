@@ -3,9 +3,7 @@
  * Mantiene solo el schedule más reciente por curso/año académico
  */
 
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "../src/lib/prisma";
 
 async function cleanDuplicateSchedules() {
   console.log("🧹 Iniciando limpieza de schedules duplicados...\n");

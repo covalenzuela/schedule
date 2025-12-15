@@ -355,7 +355,7 @@ export function SchoolScheduleConfig({
                   Configura horarios de almuerzo específicos para cada día de la semana
                 </p>
 
-                {['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'].map((day, index) => {
+                {(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'] as const).map((day, index) => {
                   const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
                   const dayConfig = config.lunchBreakByDay[day];
 
