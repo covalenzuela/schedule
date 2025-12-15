@@ -48,7 +48,7 @@ async function main() {
     console.log(`🏫 ${school.name}`);
     console.log(`   ID: ${school.id}`);
     console.log(`   Usuarios asociados: ${school.users.length}`);
-    school.users.forEach((us) => {
+    school.users.forEach((us: { user: { email: string }; role: string }) => {
       console.log(`      - ${us.user.email} (${us.role})`);
     });
     console.log(`   👨‍🏫 Profesores: ${school._count.teachers}`);
