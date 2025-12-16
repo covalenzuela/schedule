@@ -65,38 +65,63 @@ model UserSchool {
 // 🏫 SCHOOL MODEL
 // ============================================
 model School {
-  id        String   @id @default(cuid())
-  name      String
-  address   String
-  phone     String?
-  email     String?
-  
-  // Configuración de jornada escolar (horario tipo)
-  scheduleStartTime   String  @default("09:00") // Hora de inicio de jornada
-  scheduleEndTime     String  @default("18:00") // Hora de término de jornada
-  blockDuration       Int     @default(60)      // Duración de bloques en minutos
-  breakDuration       Int     @default(15)      // Duración de recreos en minutos
-  lunchBreakEnabled   Boolean @default(true)    // Si hay recreo de almuerzo (global)
-  
-  // NUEVO: Horarios de almuerzo por día (JSON)
-  // Formato: {"MONDAY": {"enabled": true, "start": "13:00", "end": "14:00"}, ...}
-  lunchBreakConfig    String  @default("{\"MONDAY\":{\"enabled\":true,\"start\":\"13:00\",\"end\":\"14:00\"},\"TUESDAY\":{\"enabled\":true,\"start\":\"13:00\",\"end\":\"14:00\"},\"WEDNESDAY\":{\"enabled\":true,\"start\":\"13:00\",\"end\":\"14:00\"},\"THURSDAY\":{\"enabled\":true,\"start\":\"13:00\",\"end\":\"14:00\"},\"FRIDAY\":{\"enabled\":true,\"start\":\"13:00\",\"end\":\"14:00\"}}")
-  
-  // Campos legacy (mantener por compatibilidad)
-  lunchBreakStart     String  @default("13:00")
-  lunchBreakEnd       String  @default("14:00")
-  
+  id      String  @id @default(cuid())
+  name    String
+  address String
+  phone   String?
+  email   String?
+
+  // ⚠️ CAMPOS DEPRECADOS - Mantener solo por compatibilidad con datos existentes
+  // Usar ScheduleLevelConfig para nueva funcionalidad
+  scheduleStartTime String  @default("08:00")
+  scheduleEndTime   String  @default("17:00")
+  blockDuration     Int     @default(45)
+  breakDuration     Int     @default(15)
+  lunchBreakEnabled Boolean @default(true)
+  lunchBreakConfig  String  @default("{\"MONDAY\":{\"enabled\":true,\"start\":\"13:00\",\"end\":\"14:00\"},\"TUESDAY\":{\"enabled\":true,\"start\":\"13:00\",\"end\":\"14:00\"},\"WEDNESDAY\":{\"enabled\":true,\"start\":\"13:00\",\"end\":\"14:00\"},\"THURSDAY\":{\"enabled\":true,\"start\":\"13:00\",\"end\":\"14:00\"},\"FRIDAY\":{\"enabled\":true,\"start\":\"13:00\",\"end\":\"14:00\"}}")
+  lunchBreakStart   String  @default("13:00")
+  lunchBreakEnd     String  @default("14:00")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  users     UserSchool[]
-  teachers  Teacher[]
-  subjects  Subject[]
-  courses   Course[]
-  schedules Schedule[]
+  users        UserSchool[]
+  teachers     Teacher[]
+  subjects     Subject[]
+  courses      Course[]
+  schedules    Schedule[]
+  levelConfigs ScheduleLevelConfig[] // 🆕 Configuración por nivel académico
 
   @@map("schools")
+}
+
+// ============================================
+// ⚙️ SCHEDULE LEVEL CONFIG (Básica/Media)
+// ============================================
+model ScheduleLevelConfig {
+  id            String @id @default(cuid())
+  schoolId      String
+  academicLevel String // BASIC (1°-8° Básico), MIDDLE (1°-4° Medio)
+
+  // Horario general
+  startTime     String @default("08:00") // Hora inicio jornada
+  endTime       String @default("17:00") // Hora fin jornada
+  blockDuration Int    @default(45) // Duración bloques en minutos (múltiplo de 15)
+
+  // Recreos explícitos (JSON array)
+  // Formato: [{"afterBlock": 2, "duration": 15, "name": "Recreo"}, {"afterBlock": 4, "duration": 45, "name": "Almuerzo"}]
+  breaks String @default("[]")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([schoolId, academicLevel])
+  @@index([schoolId])
+  @@map("schedule_level_configs")
 }
 
 // ============================================
@@ -129,10 +154,10 @@ model Teacher {
 model TeacherAvailability {
   id           String   @id @default(cuid())
   teacherId    String
-  academicYear Int      // Año académico (2024, 2025, etc.) para historial
-  dayOfWeek    String   // MONDAY, TUESDAY, etc.
-  startTime    String   // HH:mm format
-  endTime      String   // HH:mm format
+  academicYear Int // Año académico (2024, 2025, etc.) para historial
+  dayOfWeek    String // MONDAY, TUESDAY, etc.
+  startTime    String // HH:mm format
+  endTime      String // HH:mm format
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -196,7 +221,7 @@ model Course {
   name          String // e.g., "1° Básico A"
   grade         String // e.g., "1", "2", "3"
   section       String // e.g., "A", "B", "C"
-  academicLevel String // PRIMARY, SECONDARY, HIGH_SCHOOL
+  academicLevel String // 🆕 BASIC (1°-8° Básico), MIDDLE (1°-4° Medio)
   academicYear  Int
   studentCount  Int?
   createdAt     DateTime @default(now())
@@ -209,6 +234,7 @@ model Course {
 
   @@index([schoolId])
   @@index([academicYear])
+  @@index([academicLevel]) // 🆕 Índice para filtrar por nivel
   @@map("courses")
 }
 
@@ -225,6 +251,11 @@ model Schedule {
   startDate    DateTime
   endDate      DateTime
   isActive     Boolean  @default(true)
+  
+  // 🆕 Snapshot de configuración con la que fue creado
+  configSnapshot String? // JSON: {"startTime": "08:00", "endTime": "17:00", "blockDuration": 45, "academicLevel": "BASIC"}
+  isDeprecated   Boolean @default(false) // 🆕 Marca si quedó obsoleto por cambio de jornada
+  
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -237,6 +268,7 @@ model Schedule {
   @@index([courseId])
   @@index([academicYear])
   @@index([isActive])
+  @@index([isDeprecated]) // 🆕 Índice para filtrar obsoletos
   @@map("schedules")
 }
 

@@ -20,12 +20,6 @@ export default function LandingPage() {
             <a href="#features" className="landing-menu-link">
               Características
             </a>
-            <a href="#pricing" className="landing-menu-link">
-              Precios
-            </a>
-            <a href="#about" className="landing-menu-link">
-              Nosotros
-            </a>
             <Link href="/auth/login">
               <button className="landing-btn-login">Iniciar Sesión</button>
             </Link>
@@ -93,9 +87,7 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          <p className="landing-hero-footer">
-            ✨ Sin tarjeta • 14 días gratis • Cancela cuando quieras
-          </p>
+          <p className="landing-hero-footer">✨ Sin tarjeta</p>
 
           {/* Dashboard Preview con glassmorphism */}
           <div className="landing-hero-preview">
@@ -184,164 +176,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="landing-stats">
-        <div className="landing-stats-grid">
-          {[
-            { number: "500+", label: "Colegios Activos" },
-            { number: "50K+", label: "Profesores" },
-            { number: "99.9%", label: "Uptime" },
-            { number: "24/7", label: "Soporte" },
-          ].map((stat, index) => (
-            <div key={index} className="landing-stat">
-              <div className="landing-stat-number">{stat.number}</div>
-              <div className="landing-stat-label">{stat.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section id="pricing" className="landing-pricing">
-        <div className="landing-section-header">
-          <h2 className="landing-section-title">
-            Precios simples y transparentes
-          </h2>
-          <p className="landing-section-subtitle">
-            Elige el plan perfecto para tu institución
-          </p>
-        </div>
-
-        <div className="landing-pricing-grid">
-          {[
-            {
-              name: "Básico",
-              price: "$29",
-              period: "/mes",
-              description: "Perfecto para empezar",
-              features: [
-                "1 colegio",
-                "Hasta 50 profesores",
-                "Hasta 20 cursos",
-                "Soporte por email",
-                "Reportes básicos",
-              ],
-              cta: "Comenzar",
-              popular: false,
-            },
-            {
-              name: "Profesional",
-              price: "$79",
-              period: "/mes",
-              description: "Más popular",
-              features: [
-                "3 colegios",
-                "Hasta 200 profesores",
-                "Cursos ilimitados",
-                "Soporte prioritario",
-                "Reportes avanzados",
-                "API access",
-              ],
-              cta: "Comenzar Ahora",
-              popular: true,
-            },
-            {
-              name: "Empresa",
-              price: "$199",
-              period: "/mes",
-              description: "Para redes educativas",
-              features: [
-                "Colegios ilimitados",
-                "Profesores ilimitados",
-                "Todo ilimitado",
-                "Soporte 24/7",
-                "Dashboard personalizado",
-                "Onboarding dedicado",
-              ],
-              cta: "Contactar Ventas",
-              popular: false,
-            },
-          ].map((plan, index) => (
-            <div
-              key={index}
-              className={`landing-pricing-card ${
-                plan.popular ? "landing-pricing-card-popular" : ""
-              }`}
-            >
-              {plan.popular && (
-                <div className="landing-pricing-badge">Más Popular</div>
-              )}
-              <div className="landing-pricing-header">
-                <h3 className="landing-pricing-name">{plan.name}</h3>
-                <p className="landing-pricing-description">
-                  {plan.description}
-                </p>
-                <div className="landing-pricing-price">
-                  <span className="landing-pricing-amount">{plan.price}</span>
-                  <span className="landing-pricing-period">{plan.period}</span>
-                </div>
-              </div>
-              <ul className="landing-pricing-features">
-                {plan.features.map((feature, featureIndex) => (
-                  <li key={featureIndex}>
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              <Link href="/auth/register">
-                <Button
-                  variant={plan.popular ? "primary" : "outline"}
-                  className="w-full"
-                  size="lg"
-                >
-                  {plan.cta}
-                </Button>
-              </Link>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="landing-cta">
-        <div className="landing-cta-content">
-          <h2 className="landing-cta-title">
-            ¿Listo para revolucionar tus horarios?
-          </h2>
-          <p className="landing-cta-description">
-            Únete a cientos de instituciones que ya confían en {siteConfig.name}
-          </p>
-          <div className="landing-cta-actions">
-            <Link href="/auth/register">
-              <Button size="lg" className="landing-cta-btn-primary">
-                Comenzar Gratis
-              </Button>
-            </Link>
-            <Link href="#contact">
-              <Button
-                size="lg"
-                variant="ghost"
-                className="landing-cta-btn-secondary"
-              >
-                Hablar con Ventas
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
       {/* Footer */}
       <footer className="landing-footer">
         <div className="landing-footer-content">
@@ -360,26 +194,6 @@ export default function LandingPage() {
               <ul>
                 <li>
                   <a href="#features">Características</a>
-                </li>
-                <li>
-                  <a href="#pricing">Precios</a>
-                </li>
-                <li>
-                  <a href="#demo">Demo</a>
-                </li>
-              </ul>
-            </div>
-            <div className="landing-footer-links">
-              <h4>Empresa</h4>
-              <ul>
-                <li>
-                  <a href="#about">Nosotros</a>
-                </li>
-                <li>
-                  <a href="#contact">Contacto</a>
-                </li>
-                <li>
-                  <a href="#blog">Blog</a>
                 </li>
               </ul>
             </div>

@@ -390,8 +390,8 @@ export async function isTeacherAvailable(
 
   // Verificar si el rango solicitado está cubierto por algún slot de disponibilidad
   const hasAvailability = availability.some(slot => {
-    // El profesor está disponible si el bloque cae completamente dentro de su disponibilidad
-    return startTime >= slot.startTime && endTime <= slot.endTime;
+    const isWithinSlot = startTime >= slot.startTime && endTime <= slot.endTime;
+    return isWithinSlot;
   });
 
   return hasAvailability;
@@ -408,7 +408,8 @@ export async function hasTeacherScheduleConflict(
   startTime: string,
   endTime: string,
   excludeBlockId?: string,
-  academicYear?: number
+  academicYear?: number,
+  excludeScheduleId?: string
 ): Promise<{
   hasConflict: boolean;
   conflictingBlocks?: Array<{
@@ -429,6 +430,8 @@ export async function hasTeacherScheduleConflict(
       schedule: {
         academicYear: year,
         isActive: true,
+        // Excluir todos los bloques del horario que estamos editando
+        ...(excludeScheduleId ? { NOT: { id: excludeScheduleId } } : {}),
       },
       // Excluir el bloque actual si es edición
       ...(excludeBlockId ? { NOT: { id: excludeBlockId } } : {}),
@@ -480,6 +483,7 @@ export async function validateTeacherSchedule(
   options?: {
     excludeBlockId?: string;
     academicYear?: number;
+    excludeScheduleId?: string;
   }
 ): Promise<{
   isValid: boolean;
@@ -511,7 +515,8 @@ export async function validateTeacherSchedule(
     startTime,
     endTime,
     options?.excludeBlockId,
-    options?.academicYear
+    options?.academicYear,
+    options?.excludeScheduleId
   );
 
   if (conflictCheck.hasConflict) {

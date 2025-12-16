@@ -8,6 +8,7 @@ import {
   getSchedulesForCourse,
   getSchedulesForTeacher,
 } from "@/modules/schedules/actions";
+import { getScheduleConfigForCourse } from "@/modules/schools/actions/schedule-config";
 import { ScheduleGrid } from "@/modules/schedules/components/ScheduleGridSimple";
 import { DownloadScheduleModal } from "@/components/ui";
 import "../../schools.css";
@@ -134,13 +135,69 @@ export default function SchedulesPage() {
               startTime: block.startTime,
               endTime: block.endTime,
               subject: block.subject.name,
-              teacher: `${block.teacher.firstName} ${block.teacher.lastName}`,
+              teacher: block.teacher ? `${block.teacher.firstName} ${block.teacher.lastName}` : '',
+              teacherId: block.teacher?.id,
               color: block.subject.color,
             }));
             console.log("[Acordeón] Bloques transformados:", blocks.length);
-            setScheduleData((prev) => ({ ...prev, [id]: blocks }));
+            
+            // Obtener configuración del nivel académico del curso
+            try {
+              const config = await getScheduleConfigForCourse(id);
+              console.log("[Acordeón] Config cargada:", config);
+              
+              // Guardar bloques, configuración y metadatos del schedule
+              setScheduleData((prev) => ({
+                ...prev,
+                [id]: {
+                  blocks,
+                  config,
+                  isDeprecated: schedules[0].isDeprecated,
+                  scheduleId: schedules[0].id,
+                  configSnapshot: schedules[0].configSnapshot,
+                },
+              }));
+            } catch (configError) {
+              console.error("[Acordeón] Error obteniendo config, usando fallback:", configError);
+              // Guardar sin config si falla
+              setScheduleData((prev) => ({
+                ...prev,
+                [id]: {
+                  blocks,
+                  config: null,
+                  isDeprecated: schedules[0].isDeprecated,
+                  scheduleId: schedules[0].id,
+                  configSnapshot: schedules[0].configSnapshot,
+                },
+              }));
+            }
           } else {
-            setScheduleData((prev) => ({ ...prev, [id]: [] }));
+            // No hay schedules, pero igual obtener config para posible uso futuro
+            try {
+              const config = await getScheduleConfigForCourse(id);
+              setScheduleData((prev) => ({ 
+                ...prev, 
+                [id]: { 
+                  blocks: [], 
+                  config,
+                  isDeprecated: false,
+                  scheduleId: null,
+                  configSnapshot: null,
+                } 
+              }));
+            } catch (error) {
+              console.error("[Acordeón] Error obteniendo config:", error);
+              setScheduleData((prev) => ({ 
+                ...prev, 
+                [id]: { 
+                  blocks: [], 
+                  config: null,
+                  isDeprecated: false,
+                  scheduleId: null,
+                  configSnapshot: null,
+                } 
+              }));
+            }
           }
         } else {
           // Cargar horarios de profesor
@@ -155,21 +212,50 @@ export default function SchedulesPage() {
               startTime: block.startTime,
               endTime: block.endTime,
               subject: block.subject.name,
-              course: block.course.name,
+              course: block.course?.name || '',
+              courseId: block.course?.id,
               color: block.subject.color,
             }));
             console.log(
               "[Acordeón] Bloques transformados:",
               transformedBlocks.length
             );
-            setScheduleData((prev) => ({ ...prev, [id]: transformedBlocks }));
+            setScheduleData((prev) => ({ 
+              ...prev, 
+              [id]: { 
+                blocks: transformedBlocks,
+                config: null, // Profesores no tienen config específica
+                isDeprecated: false,
+                scheduleId: null,
+                configSnapshot: null,
+              } 
+            }));
           } else {
-            setScheduleData((prev) => ({ ...prev, [id]: [] }));
+            setScheduleData((prev) => ({ 
+              ...prev, 
+              [id]: { 
+                blocks: [], 
+                config: null,
+                isDeprecated: false,
+                scheduleId: null,
+                configSnapshot: null,
+              } 
+            }));
           }
         }
       } catch (error) {
         console.error("Error cargando horario:", error);
-        setScheduleData((prev) => ({ ...prev, [id]: [] }));
+        // Establecer estructura vacía con la forma correcta
+        setScheduleData((prev) => ({ 
+          ...prev, 
+          [id]: { 
+            blocks: [], 
+            config: null,
+            isDeprecated: false,
+            scheduleId: null,
+            configSnapshot: null,
+          } 
+        }));
       } finally {
         setLoadingSchedules((prev) => ({ ...prev, [id]: false }));
       }
@@ -199,7 +285,8 @@ export default function SchedulesPage() {
               startTime: block.startTime,
               endTime: block.endTime,
               subject: block.subject.name,
-              teacher: `${block.teacher.firstName} ${block.teacher.lastName}`,
+              teacher: block.teacher ? `${block.teacher.firstName} ${block.teacher.lastName}` : '',
+              teacherId: block.teacher?.id,
               color: block.subject.color,
             }));
             setScheduleData((prev) => ({ ...prev, [id]: blocks }));
@@ -213,7 +300,8 @@ export default function SchedulesPage() {
               startTime: block.startTime,
               endTime: block.endTime,
               subject: block.subject.name,
-              course: block.course.name,
+              course: block.course?.name || '',
+              courseId: block.course?.id,
               color: block.subject.color,
             }));
             setScheduleData((prev) => ({ ...prev, [id]: transformedBlocks }));
@@ -364,6 +452,20 @@ export default function SchedulesPage() {
                             <div>
                               <h3 className="schedule-accordion-title">
                                 {course.name}
+                                {scheduleData[course.id]?.isDeprecated && (
+                                  <span style={{
+                                    marginLeft: "0.75rem",
+                                    padding: "0.25rem 0.5rem",
+                                    fontSize: "0.75rem",
+                                    fontWeight: 600,
+                                    color: "rgb(251, 191, 36)",
+                                    background: "rgba(251, 191, 36, 0.1)",
+                                    border: "1px solid rgba(251, 191, 36, 0.3)",
+                                    borderRadius: "0.375rem",
+                                  }}>
+                                    ⚠️ Obsoleto
+                                  </span>
+                                )}
                               </h3>
                               <p className="schedule-accordion-subtitle">
                                 {course.grade}° {course.section} •{" "}
@@ -441,6 +543,11 @@ export default function SchedulesPage() {
                         </div>
                         {expandedId === course.id && (
                           <div className="schedule-accordion-content">
+                            {(() => {
+                              console.log(`[Render] Curso ${course.id}:`, scheduleData[course.id]);
+                              console.log(`[Render] Has blocks?:`, scheduleData[course.id]?.blocks);
+                              console.log(`[Render] Blocks length:`, scheduleData[course.id]?.blocks?.length);
+                            })()}
                             {loadingSchedules[course.id] ? (
                               <div
                                 style={{
@@ -451,14 +558,41 @@ export default function SchedulesPage() {
                               >
                                 ⏳ Cargando horario...
                               </div>
-                            ) : scheduleData[course.id] &&
-                              scheduleData[course.id].length > 0 ? (
-                              <div id={`schedule-grid-${course.id}`}>
-                                <ScheduleGrid
-                                  blocks={scheduleData[course.id]}
-                                  type="course"
-                                />
-                              </div>
+                            ) : scheduleData[course.id]?.blocks &&
+                              scheduleData[course.id].blocks.length > 0 ? (
+                              <>
+                                {scheduleData[course.id].isDeprecated && (
+                                  <div style={{
+                                    margin: "1rem",
+                                    padding: "1rem",
+                                    background: "rgba(251, 191, 36, 0.1)",
+                                    border: "1px solid rgb(251, 191, 36)",
+                                    borderRadius: "0.75rem",
+                                    display: "flex",
+                                    alignItems: "flex-start",
+                                    gap: "1rem",
+                                  }}>
+                                    <span style={{ fontSize: "1.5rem" }}>⚠️</span>
+                                    <div style={{ flex: 1 }}>
+                                      <strong style={{ color: "rgb(251, 191, 36)", display: "block", marginBottom: "0.5rem" }}>
+                                        Este horario quedó obsoleto
+                                      </strong>
+                                      <p style={{ fontSize: "0.875rem", color: "rgba(255, 255, 255, 0.8)", margin: 0 }}>
+                                        La configuración de jornada del nivel académico fue modificada.
+                                        Este horario podría tener bloques fuera de rango o en horas incorrectas.
+                                        Se recomienda recrearlo en el editor.
+                                      </p>
+                                    </div>
+                                  </div>
+                                )}
+                                <div id={`schedule-grid-${course.id}`}>
+                                  <ScheduleGrid
+                                    blocks={scheduleData[course.id].blocks}
+                                    type="course"
+                                    config={scheduleData[course.id].config}
+                                  />
+                                </div>
+                              </>
                             ) : (
                               <div
                                 style={{

@@ -5,6 +5,9 @@
 
 "use client";
 
+import { generateTimeSlotsWithBreaks } from "@/lib/utils/time-slots";
+import type { ScheduleLevelConfig } from "@/types/schedule-config";
+
 interface ScheduleBlock {
   day: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY";
   startTime: string;
@@ -18,6 +21,7 @@ interface ScheduleBlock {
 interface ScheduleGridProps {
   blocks: ScheduleBlock[];
   type: "course" | "teacher";
+  config?: ScheduleLevelConfig | null; // Configuración de nivel académico
 }
 
 const DAYS = [
@@ -28,26 +32,23 @@ const DAYS = [
   { key: "FRIDAY", label: "Viernes" },
 ];
 
-export function ScheduleGrid({ blocks, type }: ScheduleGridProps) {
-  // Generar slots dinámicamente basándose en los bloques reales
-  const generateTimeSlots = () => {
+export function ScheduleGrid({ blocks, type, config }: ScheduleGridProps) {
+  // Usar configuración si está disponible, sino fallback a slots dinámicos
+  const timeSlots = config 
+    ? generateTimeSlotsWithBreaks(config)
+    : generateFallbackTimeSlots(blocks);
+
+  function generateFallbackTimeSlots(blocks: ScheduleBlock[]) {
     if (blocks.length === 0) {
       // Slots por defecto si no hay bloques
       return [
-        { start: "09:00", end: "10:00" },
-        { start: "10:00", end: "11:00" },
-        { start: "11:00", end: "12:00" },
-        { start: "12:00", end: "13:00" },
-        {
-          start: "13:00",
-          end: "14:00",
-          isBreak: true,
-          label: "Descanso para el Almuerzo",
-        },
-        { start: "14:00", end: "15:00" },
-        { start: "15:00", end: "16:00" },
-        { start: "16:00", end: "17:00" },
-        { start: "17:00", end: "18:00" },
+        { start: "08:00", end: "09:00", label: "Bloque 1", number: 1 },
+        { start: "09:00", end: "10:00", label: "Bloque 2", number: 2 },
+        { start: "10:00", end: "11:00", label: "Bloque 3", number: 3 },
+        { start: "11:00", end: "12:00", label: "Bloque 4", number: 4 },
+        { start: "13:00", end: "14:00", isBreak: true, label: "Almuerzo" },
+        { start: "14:00", end: "15:00", label: "Bloque 5", number: 5 },
+        { start: "15:00", end: "16:00", label: "Bloque 6", number: 6 },
       ];
     }
 
@@ -58,33 +59,24 @@ export function ScheduleGrid({ blocks, type }: ScheduleGridProps) {
       allTimes.add(block.endTime);
     });
 
-    // Convertir a array y ordenar
     const sortedTimes = Array.from(allTimes).sort();
-
-    // Crear slots desde el primer tiempo hasta el último
-    const slots: {
-      start: string;
-      end: string;
-      isBreak?: boolean;
-      label?: string;
-    }[] = [];
+    const slots: any[] = [];
+    let blockNumber = 1;
 
     for (let i = 0; i < sortedTimes.length - 1; i++) {
       const start = sortedTimes[i];
       const end = sortedTimes[i + 1];
 
-      // Verificar si es almuerzo (entre 13:00 y 14:00 típicamente)
       if (start >= "13:00" && end <= "14:00") {
         slots.push({ start, end, isBreak: true, label: "Almuerzo" });
       } else {
-        slots.push({ start, end });
+        slots.push({ start, end, label: `Bloque ${blockNumber}`, number: blockNumber });
+        blockNumber++;
       }
     }
 
     return slots;
-  };
-
-  const timeSlots = generateTimeSlots();
+  }
 
   const getBlockForSlot = (day: string, startTime: string) => {
     return blocks.find(
@@ -106,8 +98,8 @@ export function ScheduleGrid({ blocks, type }: ScheduleGridProps) {
         </div>
 
         {/* Filas de horarios */}
-        {timeSlots.map((slot) => (
-          <div key={slot.start} className="schedule-row">
+        {timeSlots.map((slot, index) => (
+          <div key={`${slot.start}-${slot.end}-${index}`} className="schedule-row">
             {/* Columna de hora */}
             <div className="schedule-time-cell">
               {slot.start} - {slot.end}

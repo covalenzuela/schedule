@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
-import { validateTeacherSchedule } from "@/modules/teachers/actions";
+import { validateTeacherSchedule, hasTeacherScheduleConflict } from "@/modules/teachers/actions";
 import { generateScheduleForCourse } from "./generation";
 import type { ScheduleGenerationConfig } from "../types";
 
@@ -110,7 +110,7 @@ export async function getSchedulesForCourse(courseId: string) {
     const currentYear = new Date().getFullYear();
 
     console.log(
-      `[getSchedulesForCourse] Buscando schedules para curso: ${courseId}, año: ${currentYear}`
+      `[getSchedulesForCourse] 🔍 Buscando schedules para curso: ${courseId}, año: ${currentYear}`
     );
 
     const schedules = await prisma.schedule.findMany({
@@ -119,7 +119,11 @@ export async function getSchedulesForCourse(courseId: string) {
         academicYear: currentYear,
         isActive: true,
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        isDeprecated: true,
+        configSnapshot: true,
         blocks: {
           include: {
             subject: true,
@@ -135,22 +139,22 @@ export async function getSchedulesForCourse(courseId: string) {
     });
 
     console.log(
-      `[getSchedulesForCourse] Encontrados ${schedules.length} schedules`
+      `[getSchedulesForCourse] ✅ Encontrados ${schedules.length} schedules`
     );
     if (schedules.length > 0) {
       console.log(
-        `[getSchedulesForCourse] Schedule ID: ${schedules[0].id}, Bloques: ${schedules[0].blocks.length}`
+        `[getSchedulesForCourse] 📋 Schedule ID: ${schedules[0].id}, Total Bloques: ${schedules[0].blocks.length}`
       );
-      console.log(
-        `[getSchedulesForCourse] Bloques detalles:`,
-        schedules[0].blocks.map(
-          (b) => `${b.dayOfWeek} ${b.startTime}-${b.endTime} ${b.subject.name}`
-        )
-      );
+      schedules[0].blocks.forEach((b, idx) => {
+        console.log(
+          `[getSchedulesForCourse] Bloque ${idx + 1}: ${b.dayOfWeek} ${b.startTime}-${b.endTime} | ${b.subject.name} | Profesor: ${b.teacher ? `${b.teacher.firstName} ${b.teacher.lastName}` : 'Sin asignar'}`
+        );
+      });
     }
 
     // Revalidar la ruta para asegurar datos frescos
     revalidatePath("/schedules");
+    revalidatePath("/schedules/editor");
 
     return schedules;
   } catch (error) {
@@ -259,21 +263,31 @@ export async function saveSchedule(data: {
 
     // Si es horario de CURSO
     if (entityType === "course" && courseId) {
-      // ✨ NUEVA VALIDACIÓN: Verificar conflictos ANTES de guardar
+      // Obtener el schedule primero para excluir sus bloques en la validación
+      let schedule = await prisma.schedule.findFirst({
+        where: { courseId, academicYear, isActive: true },
+      });
+
+      // ✨ VALIDACIÓN: Verificar SOLO conflictos reales (bloques en otros cursos)
+      // La disponibilidad declarada se muestra como warning visual, pero NO bloquea
       const validationErrors: string[] = [];
 
       for (const block of blocks) {
         if (!block.teacherId) continue;
 
-        const validation = await validateTeacherSchedule(
+        // Verificar solo conflictos reales (bloques asignados en otros horarios)
+        const conflictCheck = await hasTeacherScheduleConflict(
           block.teacherId,
           block.day,
           block.startTime,
           block.endTime,
-          { academicYear }
+          undefined, // excludeBlockId
+          academicYear,
+          schedule?.id // Excluir bloques del horario actual
         );
 
-        if (!validation.isValid) {
+        // Solo bloquear si hay conflictos REALES con otros cursos
+        if (conflictCheck.hasConflict) {
           const teacherInfo = await prisma.teacher.findUnique({
             where: { id: block.teacherId },
           });
@@ -281,22 +295,23 @@ export async function saveSchedule(data: {
             ? `${teacherInfo.firstName} ${teacherInfo.lastName}`
             : 'Profesor';
 
+          const conflictMessages = conflictCheck.conflictingBlocks!.map(
+            (conflict) =>
+              `Ya asignado en ${conflict.schoolName} - ${conflict.courseName} (${conflict.startTime}-${conflict.endTime})`
+          );
+
           validationErrors.push(
-            `${teacherName} (${block.subject}, ${block.day} ${block.startTime}-${block.endTime}): ${validation.errors.join(', ')}`
+            `${teacherName} (${block.subject}, ${block.day} ${block.startTime}-${block.endTime}): ${conflictMessages.join(', ')}`
           );
         }
       }
 
-      // Si hay errores, no guardar y devolver mensaje
+      // Si hay conflictos reales, no guardar y devolver mensaje
       if (validationErrors.length > 0) {
         throw new Error(
           `No se puede guardar el horario. Conflictos encontrados:\n\n${validationErrors.join('\n\n')}`
         );
       }
-
-      let schedule = await prisma.schedule.findFirst({
-        where: { courseId, academicYear, isActive: true },
-      });
 
       if (!schedule) {
         const course = await prisma.course.findUnique({

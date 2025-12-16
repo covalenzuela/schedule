@@ -5,7 +5,7 @@ import { getSchools, deleteSchool } from "@/modules/schools/actions";
 import {
   SchoolList,
   AddSchoolButton,
-  SchoolScheduleConfig,
+  AcademicLevelScheduleConfig,
 } from "@/modules/schools/components";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useModal } from "@/contexts/ModalContext";
@@ -99,7 +99,7 @@ export default function SchoolsPage() {
 
       {/* Modal de configuración de jornada */}
       {selectedSchool && (
-        <SchoolScheduleConfig
+        <AcademicLevelScheduleConfig
           schoolId={selectedSchool.id}
           schoolName={selectedSchool.name}
           onClose={() => setSelectedSchool(null)}

@@ -8,6 +8,7 @@ import {
   setTeacherAvailability,
 } from "@/modules/teachers/actions";
 import { getSchoolScheduleConfig } from "@/modules/schools/actions";
+import { getSchoolScheduleRange } from "@/modules/schools/actions/schedule-range";
 import { ImportAvailabilityModal } from "@/modules/teachers/components/ImportAvailabilityModal";
 import "./TeacherAvailability.css";
 
@@ -107,18 +108,23 @@ export default function TeacherAvailabilityPage({
         return;
       }
 
-      // Obtener configuración del colegio
+      // Obtener configuración del colegio (legacy, mantener para lunchBreak)
       const schoolConfig = await getSchoolScheduleConfig(teacherData.schoolId);
+      
+      // Obtener rango completo considerando TODAS las jornadas (Básica + Media)
+      const scheduleRange = await getSchoolScheduleRange(teacherData.schoolId);
+      
+      console.log('[Availability] Rango de horarios:', scheduleRange);
 
-      // Generar slots basados en la configuración del colegio
+      // Generar slots basados en el RANGO COMPLETO
       const slots = generateTimeSlots(
-        schoolConfig.startTime,
-        schoolConfig.endTime,
-        schoolConfig.blockDuration,
+        scheduleRange.startTime,
+        scheduleRange.endTime,
+        scheduleRange.blockDuration,
         schoolConfig.breakDuration
       );
       setTimeSlots(slots);
-      setScheduleEndTime(schoolConfig.endTime);
+      setScheduleEndTime(scheduleRange.endTime);
       setLunchBreakByDay(schoolConfig.lunchBreakByDay || {});
 
       // Cargar disponibilidad del profesor
@@ -436,6 +442,17 @@ export default function TeacherAvailabilityPage({
               disponible. Los bloques en{" "}
               <span style={{ color: "var(--primary-400)" }}>azul</span> indican
               disponibilidad.
+            </p>
+            <p style={{ 
+              marginTop: "0.75rem", 
+              padding: "0.75rem", 
+              background: "rgba(59, 130, 246, 0.1)", 
+              borderLeft: "3px solid rgb(59, 130, 246)",
+              borderRadius: "0.5rem",
+              fontSize: "0.875rem"
+            }}>
+              📊 <strong>Jornadas combinadas:</strong> Esta grilla cubre todas las jornadas del colegio (Básica y Media). 
+              Marca tu disponibilidad para el rango completo de horarios.
             </p>
           </div>
         </header>

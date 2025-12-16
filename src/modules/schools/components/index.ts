@@ -11,3 +11,5 @@ export type { SchoolListProps } from './SchoolList';
 export { CreateSchoolForm } from './CreateSchoolForm';
 export { AddSchoolButton } from './AddSchoolButton';
 export { SchoolScheduleConfig } from './SchoolScheduleConfig';
+export { AcademicLevelScheduleConfig } from './AcademicLevelScheduleConfig';
+
