@@ -204,8 +204,6 @@ export function ScheduleEditor({
               hasConflict: conflictBlocks.has(key) ? true : block.hasConflict
             };
           }));
-          
-          alert(`⚠️ Horario guardado con advertencias:\n\n${result.warnings.join('\n\n')}\n\nEste profesor está asignado en múltiples cursos al mismo tiempo.`);
         }
         
         lastSavedBlocksRef.current = JSON.stringify(blocksToSave);
