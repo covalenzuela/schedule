@@ -175,11 +175,39 @@ export function ScheduleEditor({
     async (blocksToSave: ScheduleBlock[]) => {
       try {
         setSaveStatus("saving");
-        await saveSchedule({
+        const result = await saveSchedule({
           entityId,
           entityType,
           blocks: blocksToSave,
         });
+        
+        // Marcar bloques con conflictos
+        if (result.warnings && result.warnings.length > 0) {
+          console.warn("⚠️ Advertencias al guardar:", result.warnings);
+          
+          // Parsear warnings para identificar bloques con conflicto
+          const conflictBlocks = new Set<string>();
+          result.warnings.forEach((warning: string) => {
+            // Formato: "Teacher (Subject, DAY HH:MM-HH:MM): ..."
+            const match = warning.match(/\(([^,]+),\s+(\w+)\s+(\d{2}:\d{2})-(\d{2}:\d{2})\)/);
+            if (match) {
+              const [, subject, day, startTime] = match;
+              conflictBlocks.add(`${day}-${startTime}-${subject.trim()}`);
+            }
+          });
+          
+          // Marcar bloques con conflicto en el estado
+          setBlocks(prev => prev.map(block => {
+            const key = `${block.day}-${block.startTime}-${block.subject}`;
+            return {
+              ...block,
+              hasConflict: conflictBlocks.has(key) ? true : block.hasConflict
+            };
+          }));
+          
+          alert(`⚠️ Horario guardado con advertencias:\n\n${result.warnings.join('\n\n')}\n\nEste profesor está asignado en múltiples cursos al mismo tiempo.`);
+        }
+        
         lastSavedBlocksRef.current = JSON.stringify(blocksToSave);
         setSaveStatus("saved");
         setTimeout(() => setSaveStatus("idle"), 2000);
@@ -505,9 +533,12 @@ export function ScheduleEditor({
                           }}
                         >
                           {cellBlocks.map((block) => {
-                            const conflictMessage = entityType === 'course' 
-                              ? `⚠️ El profesor ${block.teacher} no está disponible en este horario`
-                              : `⚠️ No tienes disponibilidad marcada en este horario`;
+                            // Mensaje de conflicto (disponibilidad o asignación múltiple)
+                            const conflictMessage = block.hasConflict
+                              ? entityType === 'course' 
+                                ? `⚠️ Conflicto: El profesor ${block.teacher} no está disponible o está en otro curso a esta hora`
+                                : `⚠️ Conflicto: No tienes disponibilidad o estás asignado en otro curso a esta hora`
+                              : '';
                             
                             return (
                               <div

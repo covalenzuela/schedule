@@ -561,6 +561,7 @@ export default function SchedulesPage() {
                             ) : scheduleData[course.id]?.blocks &&
                               scheduleData[course.id].blocks.length > 0 ? (
                               <>
+                                {console.log(`[Render] 🎨 Renderizando ScheduleGrid con ${scheduleData[course.id].blocks.length} bloques`)}
                                 {scheduleData[course.id].isDeprecated && (
                                   <div style={{
                                     margin: "1rem",

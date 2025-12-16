@@ -33,10 +33,24 @@ const DAYS = [
 ];
 
 export function ScheduleGrid({ blocks, type, config }: ScheduleGridProps) {
+  console.log('[ScheduleGrid] 📥 Recibido:', { blocks: blocks.length, type, hasConfig: !!config });
+  
   // Usar configuración si está disponible, sino fallback a slots dinámicos
-  const timeSlots = config 
+  const rawTimeSlots = config 
     ? generateTimeSlotsWithBreaks(config)
     : generateFallbackTimeSlots(blocks);
+
+  // Normalizar slots para que todos tengan las mismas propiedades
+  const timeSlots = rawTimeSlots.map((slot: any) => ({
+    start: slot.time || slot.start,
+    end: slot.endTime || slot.end,
+    isBreak: slot.type === 'break' || slot.isBreak,
+    label: slot.label || (slot.type === 'break' ? 'Recreo' : `Bloque ${slot.blockNumber || ''}`),
+    number: slot.blockNumber || slot.number,
+  }));
+
+  console.log('[ScheduleGrid] ⏰ TimeSlots normalizados:', timeSlots.length);
+  console.log('[ScheduleGrid] 📋 Primer slot normalizado:', timeSlots[0]);
 
   function generateFallbackTimeSlots(blocks: ScheduleBlock[]) {
     if (blocks.length === 0) {

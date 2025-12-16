@@ -306,12 +306,8 @@ export async function saveSchedule(data: {
         }
       }
 
-      // Si hay conflictos reales, no guardar y devolver mensaje
-      if (validationErrors.length > 0) {
-        throw new Error(
-          `No se puede guardar el horario. Conflictos encontrados:\n\n${validationErrors.join('\n\n')}`
-        );
-      }
+      // Si hay conflictos reales, devolver como warnings en lugar de bloquear
+      const warnings = validationErrors.length > 0 ? validationErrors : undefined;
 
       if (!schedule) {
         const course = await prisma.course.findUnique({
@@ -378,7 +374,11 @@ export async function saveSchedule(data: {
       }
 
       revalidatePath("/schedules");
-      return { success: true, scheduleId: schedule.id };
+      return { 
+        success: true, 
+        scheduleId: schedule.id,
+        warnings: warnings // Incluir warnings si existen
+      };
     }
 
     // Si es horario de PROFESOR
