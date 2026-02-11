@@ -12,6 +12,7 @@ import "../../courses.css";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui";
+import Link from "next/link";
 
 type CourseWithRelations = {
   id: string;
@@ -32,7 +33,8 @@ export default function CoursesPage() {
   const [selectedSchool, setSelectedSchool] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
-  const [selectedCourseForGeneration, setSelectedCourseForGeneration] = useState<CourseWithRelations | null>(null);
+  const [selectedCourseForGeneration, setSelectedCourseForGeneration] =
+    useState<CourseWithRelations | null>(null);
   const { openModal, closeModal } = useModal();
 
   useEffect(() => {
@@ -226,21 +228,24 @@ export default function CoursesPage() {
                 </div>
 
                 <div className="schools-card-footer">
-                  <button 
+                  {/* <button
                     className="schools-card-btn schools-card-btn-secondary"
                     onClick={() => handleGenerateSchedule(course)}
                     title="Generar horario automáticamente"
                   >
                     🤖 Generar
-                  </button>
-                  <button className="schools-card-btn schools-card-btn-primary">
+                  </button> */}
+                  <Link
+                    href={`/schedules/`}
+                    className="schools-card-btn schools-card-btn-primary"
+                  >
                     {course.schedules.length > 0
                       ? "Ver Horario"
                       : "Crear Horario"}
-                  </button>
-                  <button className="schools-card-btn schools-card-btn-ghost">
+                  </Link>
+                  {/* <button className="schools-card-btn schools-card-btn-ghost">
                     Editar
-                  </button>
+                  </button> */}
                 </div>
               </div>
             ))}

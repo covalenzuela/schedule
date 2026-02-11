@@ -35,6 +35,15 @@ const DAYS = [
 export function ScheduleGrid({ blocks, type, config }: ScheduleGridProps) {
   console.log('[ScheduleGrid] 📥 Recibido:', { blocks: blocks.length, type, hasConfig: !!config });
   
+  if (blocks.length > 0) {
+    console.log('[ScheduleGrid] 🔍 Primeros bloques:', blocks.slice(0, 3).map(b => ({
+      day: b.day,
+      start: b.startTime,
+      end: b.endTime,
+      subject: b.subject
+    })));
+  }
+  
   // Usar configuración si está disponible, sino fallback a slots dinámicos
   const rawTimeSlots = config 
     ? generateTimeSlotsWithBreaks(config)
@@ -92,10 +101,17 @@ export function ScheduleGrid({ blocks, type, config }: ScheduleGridProps) {
     return slots;
   }
 
-  const getBlockForSlot = (day: string, startTime: string) => {
-    return blocks.find(
-      (block) => block.day === day && block.startTime === startTime
-    );
+  const getBlockForSlot = (day: string, slotStart: string, slotEnd: string) => {
+    // Buscar un bloque que caiga dentro del rango del slot
+    const block = blocks.find((block) => {
+      if (block.day !== day) return false;
+      
+      // El bloque debe empezar en o después del inicio del slot
+      // y antes del final del slot
+      return block.startTime >= slotStart && block.startTime < slotEnd;
+    });
+    
+    return block;
   };
 
   return (
@@ -125,7 +141,7 @@ export function ScheduleGrid({ blocks, type, config }: ScheduleGridProps) {
             ) : (
               /* Celdas de cada día */
               DAYS.map((day) => {
-                const block = getBlockForSlot(day.key, slot.start);
+                const block = getBlockForSlot(day.key, slot.start, slot.end);
 
                 return (
                   <div

@@ -53,6 +53,29 @@
   gap: 1rem;
 }
 
+/* Override global input/select styles */
+.course-form input,
+.course-form select {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.course-form input::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.course-form input:focus,
+.course-form select:focus {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: var(--primary-400) !important;
+}
+
+.course-form select option {
+  background: #1e1e2d !important;
+  color: #fff !important;
+}
+
 @media (max-width: 768px) {
   .form-row-3 {
     grid-template-columns: 1fr 1fr;

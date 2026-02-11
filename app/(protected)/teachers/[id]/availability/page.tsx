@@ -56,7 +56,7 @@ function generateTimeSlots(
     );
     currentTime += blockDuration; // Solo sumar blockDuration, no breaks
   }
-  
+
   // Agregar el tiempo final Y un bloque más como límite superior
   // Esto permite que incluso el último slot tenga un endTime válido
   slots.push(endTime);
@@ -89,7 +89,7 @@ export default function TeacherAvailabilityPage({
   const [isLoading, setIsLoading] = useState(true);
   const [showImportModal, setShowImportModal] = useState(false);
   const [timeSlots, setTimeSlots] = useState<string[]>([]);
-  const [scheduleEndTime, setScheduleEndTime] = useState<string>('18:00');
+  const [scheduleEndTime, setScheduleEndTime] = useState<string>("18:00");
   const [lunchBreakByDay, setLunchBreakByDay] = useState<
     Record<string, { enabled: boolean; start: string; end: string }>
   >({});
@@ -110,11 +110,11 @@ export default function TeacherAvailabilityPage({
 
       // Obtener configuración del colegio (legacy, mantener para lunchBreak)
       const schoolConfig = await getSchoolScheduleConfig(teacherData.schoolId);
-      
+
       // Obtener rango completo considerando TODAS las jornadas (Básica + Media)
       const scheduleRange = await getSchoolScheduleRange(teacherData.schoolId);
-      
-      console.log('[Availability] Rango de horarios:', scheduleRange);
+
+      console.log("[Availability] Rango de horarios:", scheduleRange);
 
       // Generar slots basados en el RANGO COMPLETO
       const slots = generateTimeSlots(
@@ -129,39 +129,45 @@ export default function TeacherAvailabilityPage({
 
       // Cargar disponibilidad del profesor
       const availabilityData = await getTeacherAvailability(teacherId);
-      console.log('[Availability] Datos cargados de la BD:', availabilityData);
-      console.log('[Availability] Cantidad de registros:', availabilityData.length);
+      console.log("[Availability] Datos cargados de la BD:", availabilityData);
+      console.log(
+        "[Availability] Cantidad de registros:",
+        availabilityData.length
+      );
       setAvailabilityState(availabilityData);
 
       // Convertir disponibilidad a slots seleccionados
       const selectedSet = new Set<string>();
       availabilityData.forEach((slot: AvailabilitySlot) => {
-        console.log('[Availability] Procesando slot:', slot);
+        console.log("[Availability] Procesando slot:", slot);
         const startIdx = slots.indexOf(slot.startTime);
         const endIdx = slots.indexOf(slot.endTime);
-        
+
         // endTime marca hasta dónde NO llega (exclusivo), así que pintamos hasta endIdx-1
         // PERO si endIdx = -1 (ej: endTime es 18:00 que no está en slots), pintamos hasta el final
         const lastSlotIdx = endIdx >= 0 ? endIdx : slots.length;
-        
-        console.log('[Availability] Índices:', { 
-          startIdx, 
-          endIdx, 
-          lastSlotIdx, 
-          start: slot.startTime, 
+
+        console.log("[Availability] Índices:", {
+          startIdx,
+          endIdx,
+          lastSlotIdx,
+          start: slot.startTime,
           end: slot.endTime,
-          slots: slots.slice(startIdx, lastSlotIdx)
+          slots: slots.slice(startIdx, lastSlotIdx),
         });
 
         // Pintar desde startIdx hasta lastSlotIdx (exclusivo, como slice)
         for (let i = startIdx; i < lastSlotIdx && i >= 0; i++) {
           const slotKey = `${slot.dayOfWeek}-${slots[i]}`;
           selectedSet.add(slotKey);
-          console.log('[Availability] Agregado slot:', slotKey);
+          console.log("[Availability] Agregado slot:", slotKey);
         }
       });
-      
-      console.log('[Availability] Total slots seleccionados:', selectedSet.size);
+
+      console.log(
+        "[Availability] Total slots seleccionados:",
+        selectedSet.size
+      );
       setSelectedSlots(selectedSet);
       setIsLoading(false);
     } catch (error) {
@@ -199,16 +205,16 @@ export default function TeacherAvailabilityPage({
   };
 
   const convertSlotsToAvailability = (): AvailabilitySlot[] => {
-    console.log('[convertSlots] Iniciando conversión');
-    console.log('[convertSlots] selectedSlots size:', selectedSlots.size);
-    console.log('[convertSlots] scheduleEndTime:', scheduleEndTime);
+    console.log("[convertSlots] Iniciando conversión");
+    console.log("[convertSlots] selectedSlots size:", selectedSlots.size);
+    console.log("[convertSlots] scheduleEndTime:", scheduleEndTime);
 
     const result: AvailabilitySlot[] = [];
 
     // Procesar cada día
     DAYS.forEach((day) => {
       const daySlots: string[] = [];
-      
+
       // Recopilar todos los slots seleccionados para este día
       timeSlots.forEach((time) => {
         if (selectedSlots.has(`${day.key}-${time}`)) {
@@ -218,55 +224,60 @@ export default function TeacherAvailabilityPage({
 
       if (daySlots.length === 0) return;
 
-      console.log(`[convertSlots] ${day.key}: ${daySlots.length} slots`, daySlots);
+      console.log(
+        `[convertSlots] ${day.key}: ${daySlots.length} slots`,
+        daySlots
+      );
 
       // Ordenar por tiempo (por si acaso)
       daySlots.sort();
 
       // Consolidar en rangos consecutivos
       let rangeStart = daySlots[0];
-      
+
       for (let i = 0; i < daySlots.length; i++) {
         const currentSlot = daySlots[i];
         const nextSlot = daySlots[i + 1];
-        
+
         const currentIdx = timeSlots.indexOf(currentSlot);
         const nextIdx = nextSlot ? timeSlots.indexOf(nextSlot) : -1;
-        
+
         console.log(`[convertSlots] Procesando slot ${i}:`, {
           currentSlot,
           currentIdx,
           nextSlot,
           nextIdx,
           isConsecutive: nextIdx === currentIdx + 1,
-          willCloseRange: !nextSlot || nextIdx !== currentIdx + 1
+          willCloseRange: !nextSlot || nextIdx !== currentIdx + 1,
         });
-        
+
         // Si no hay siguiente o no es consecutivo, cerrar el rango
         if (!nextSlot || nextIdx !== currentIdx + 1) {
           // El endTime es el siguiente slot después del actual, o scheduleEndTime si es el último
           const nextTimeIdx = currentIdx + 1;
           const useScheduleEnd = nextTimeIdx >= timeSlots.length;
-          const endTime = useScheduleEnd ? scheduleEndTime : timeSlots[nextTimeIdx];
-          
+          const endTime = useScheduleEnd
+            ? scheduleEndTime
+            : timeSlots[nextTimeIdx];
+
           console.log(`[convertSlots] Cerrando rango:`, {
             rangeStart,
             currentSlot,
             currentIdx,
             nextTimeIdx,
-            'timeSlots.length': timeSlots.length,
+            "timeSlots.length": timeSlots.length,
             useScheduleEnd,
-            endTime
+            endTime,
           });
-          
+
           result.push({
             dayOfWeek: day.key,
             startTime: rangeStart,
             endTime: endTime,
           });
-          
+
           console.log(`[convertSlots] Rango: ${rangeStart} - ${endTime}`);
-          
+
           // Si hay siguiente, será el inicio del próximo rango
           if (nextSlot) {
             rangeStart = nextSlot;
@@ -275,7 +286,7 @@ export default function TeacherAvailabilityPage({
       }
     });
 
-    console.log('[convertSlots] Resultado final:', result);
+    console.log("[convertSlots] Resultado final:", result);
     return result;
   };
 
@@ -285,27 +296,31 @@ export default function TeacherAvailabilityPage({
     setIsSaving(true);
     try {
       const availabilityData = convertSlotsToAvailability();
-      console.log('[Availability] Datos a guardar:', availabilityData);
-      console.log('[Availability] Cantidad de slots:', availabilityData.length);
-      
+      console.log("[Availability] Datos a guardar:", availabilityData);
+      console.log("[Availability] Cantidad de slots:", availabilityData.length);
+
       if (availabilityData.length === 0) {
         alert("⚠️ No has seleccionado ningún horario de disponibilidad");
         setIsSaving(false);
         return;
       }
-      
+
       const result = await setTeacherAvailability(teacherId, availabilityData);
-      console.log('[Availability] Resultado del guardado:', result);
-      
+      console.log("[Availability] Resultado del guardado:", result);
+
       alert("✅ Disponibilidad guardada exitosamente");
-      
+
       // Recargar datos antes de redirigir para confirmar que se guardó
       await loadData();
-      
+
       router.push("/teachers");
     } catch (error) {
       console.error("Error guardando disponibilidad:", error);
-      alert(`❌ Error al guardar la disponibilidad: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      alert(
+        `❌ Error al guardar la disponibilidad: ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }`
+      );
     } finally {
       setIsSaving(false);
     }
@@ -443,16 +458,19 @@ export default function TeacherAvailabilityPage({
               <span style={{ color: "var(--primary-400)" }}>azul</span> indican
               disponibilidad.
             </p>
-            <p style={{ 
-              marginTop: "0.75rem", 
-              padding: "0.75rem", 
-              background: "rgba(59, 130, 246, 0.1)", 
-              borderLeft: "3px solid rgb(59, 130, 246)",
-              borderRadius: "0.5rem",
-              fontSize: "0.875rem"
-            }}>
-              📊 <strong>Jornadas combinadas:</strong> Esta grilla cubre todas las jornadas del colegio (Básica y Media). 
-              Marca tu disponibilidad para el rango completo de horarios.
+            <p
+              style={{
+                marginTop: "0.75rem",
+                padding: "0.75rem",
+                background: "rgba(59, 130, 246, 0.1)",
+                borderLeft: "3px solid rgb(59, 130, 246)",
+                borderRadius: "0.5rem",
+                fontSize: "0.875rem",
+              }}
+            >
+              📊 <strong>Jornadas combinadas:</strong> Esta grilla cubre todas
+              las jornadas del colegio (Básica y Media). Marca tu disponibilidad
+              para el rango completo de horarios.
             </p>
           </div>
         </header>

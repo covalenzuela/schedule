@@ -1,14 +1,14 @@
 /**
  * 🧭 Componente Navbar - Sistema de Horarios
- * 
+ *
  * Barra de navegación principal con diseño oscuro y menú hamburguesa responsive
  */
 
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useState, ReactNode } from 'react';
-import './Navbar.css';
+import Link from "next/link";
+import { useState, ReactNode } from "react";
+import "./Navbar.css";
 
 // Componente de Avatar de Usuario
 function UserAvatar({ name }: { name?: string }) {
@@ -18,17 +18,17 @@ function UserAvatar({ name }: { name?: string }) {
   const handleLogout = async () => {
     setIsLoading(true);
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      window.location.href = '/auth/login';
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/auth/login";
     } catch (error) {
-      console.error('Error al cerrar sesión:', error);
+      console.error("Error al cerrar sesión:", error);
       setIsLoading(false);
     }
   };
 
   const getInitials = (name?: string) => {
-    if (!name) return '?';
-    const parts = name.split(' ');
+    if (!name) return "?";
+    const parts = name.split(" ");
     if (parts.length >= 2) {
       return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
     }
@@ -40,14 +40,17 @@ function UserAvatar({ name }: { name?: string }) {
       <button
         className="navbar-user-avatar"
         onClick={() => setIsOpen(!isOpen)}
-        title={name || 'Usuario'}
+        title={name || "Usuario"}
       >
         <span className="navbar-user-initials">{getInitials(name)}</span>
       </button>
 
       {isOpen && (
         <>
-          <div className="navbar-user-overlay" onClick={() => setIsOpen(false)} />
+          <div
+            className="navbar-user-overlay"
+            onClick={() => setIsOpen(false)}
+          />
           <div className="navbar-user-dropdown">
             {name && (
               <div className="navbar-user-info">
@@ -59,7 +62,7 @@ function UserAvatar({ name }: { name?: string }) {
               disabled={isLoading}
               className="navbar-user-logout"
             >
-              🚪 {isLoading ? 'Cerrando...' : 'Cerrar Sesión'}
+              🚪 {isLoading ? "Cerrando..." : "Cerrar Sesión"}
             </button>
           </div>
         </>
@@ -69,7 +72,15 @@ function UserAvatar({ name }: { name?: string }) {
 }
 
 // Componente de Menú Dropdown
-function DropdownMenu({ title, icon, items }: { title: string; icon: string; items: { href: string; label: string; icon: string }[] }) {
+function DropdownMenu({
+  title,
+  icon,
+  items,
+}: {
+  title: string;
+  icon: string;
+  items: { href: string; label: string; icon: string }[];
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const timeoutRef = useState<NodeJS.Timeout | null>(null);
 
@@ -87,18 +98,20 @@ function DropdownMenu({ title, icon, items }: { title: string; icon: string; ite
   };
 
   return (
-    <div 
+    <div
       className="navbar-dropdown"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       <button className="navbar-dropdown-trigger">
         {icon} {title}
-        <span className={`navbar-dropdown-arrow ${isOpen ? 'open' : ''}`}>▼</span>
+        <span className={`navbar-dropdown-arrow ${isOpen ? "open" : ""}`}>
+          ▼
+        </span>
       </button>
-      
+
       {isOpen && (
-        <div 
+        <div
           className="navbar-dropdown-menu"
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
@@ -135,10 +148,10 @@ export function Navbar({ children, userName }: NavbarProps) {
   };
 
   const managementItems = [
-    { href: '/schools', label: 'Colegios', icon: '🏫' },
-    { href: '/teachers', label: 'Profesores', icon: '👨‍🏫' },
-    { href: '/subjects', label: 'Asignaturas', icon: '📚' },
-    { href: '/courses', label: 'Cursos', icon: '🎓' },
+    { href: "/schools", label: "Colegios", icon: "🏫" },
+    { href: "/teachers", label: "Profesores", icon: "👨‍🏫" },
+    { href: "/subjects", label: "Asignaturas", icon: "📚" },
+    { href: "/courses", label: "Cursos", icon: "🎓" },
   ];
 
   return (
@@ -158,11 +171,7 @@ export function Navbar({ children, userName }: NavbarProps) {
           {/* Navegación desktop */}
           <div className="navbar-menu-desktop">
             <NavLink href="/dashboard">🏠 Dashboard</NavLink>
-            <DropdownMenu 
-              title="Gestión" 
-              icon="⚙️"
-              items={managementItems}
-            />
+            <DropdownMenu title="Gestión" icon="⚙️" items={managementItems} />
             <NavLink href="/schedules">🗓️ Horarios</NavLink>
           </div>
 
@@ -174,7 +183,7 @@ export function Navbar({ children, userName }: NavbarProps) {
 
           {/* Botón hamburguesa */}
           <button
-            className={`navbar-hamburger ${isMenuOpen ? 'active' : ''}`}
+            className={`navbar-hamburger ${isMenuOpen ? "active" : ""}`}
             onClick={toggleMenu}
             aria-label="Toggle menu"
           >
@@ -186,12 +195,10 @@ export function Navbar({ children, userName }: NavbarProps) {
       </nav>
 
       {/* Overlay */}
-      {isMenuOpen && (
-        <div className="navbar-overlay" onClick={closeMenu} />
-      )}
+      {isMenuOpen && <div className="navbar-overlay" onClick={closeMenu} />}
 
       {/* Menú móvil deslizante */}
-      <div className={`navbar-menu-mobile ${isMenuOpen ? 'open' : ''}`}>
+      <div className={`navbar-menu-mobile ${isMenuOpen ? "open" : ""}`}>
         <div className="navbar-menu-mobile-header">
           <span className="navbar-menu-mobile-title">Menú</span>
           <button
@@ -202,12 +209,12 @@ export function Navbar({ children, userName }: NavbarProps) {
             ✕
           </button>
         </div>
-        
+
         <div className="navbar-menu-mobile-links">
           <MobileNavLink href="/dashboard" onClick={closeMenu}>
             🏠 Dashboard
           </MobileNavLink>
-          
+
           {/* Sección de Gestión en móvil */}
           <div className="navbar-mobile-section">
             <div className="navbar-mobile-section-title">⚙️ Gestión</div>
@@ -228,21 +235,21 @@ export function Navbar({ children, userName }: NavbarProps) {
           <MobileNavLink href="/schedules" onClick={closeMenu}>
             🗓️ Horarios
           </MobileNavLink>
-          
+
           {/* Usuario y Logout en menú móvil */}
           {userName && (
             <div className="navbar-mobile-user">
               <span className="navbar-mobile-user-label">👤 {userName}</span>
             </div>
           )}
-          
+
           <button
             onClick={async () => {
               try {
-                await fetch('/api/auth/logout', { method: 'POST' });
-                window.location.href = '/auth/login';
+                await fetch("/api/auth/logout", { method: "POST" });
+                window.location.href = "/auth/login";
               } catch (error) {
-                console.error('Error al cerrar sesión:', error);
+                console.error("Error al cerrar sesión:", error);
               }
             }}
             className="navbar-mobile-logout"

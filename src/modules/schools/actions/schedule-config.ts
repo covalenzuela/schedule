@@ -3,13 +3,20 @@
  * Manejo de configuración de horarios por nivel académico
  */
 
-'use server';
+"use server";
 
-import { prisma } from '@/lib/prisma';
-import { getUserSchoolIds } from '@/lib/auth-helpers';
-import type { ScheduleLevelConfig, AcademicLevel, BreakConfig } from '@/types/schedule-config';
-import { markSchedulesAsDeprecatedForLevel } from '@/modules/schedules/actions/compatibility';
-import { DEFAULT_BASIC_CONFIG, DEFAULT_MIDDLE_CONFIG } from '@/types/schedule-config';
+import { prisma } from "@/lib/prisma";
+import { getUserSchoolIds } from "@/lib/auth-helpers";
+import type {
+  ScheduleLevelConfig,
+  AcademicLevel,
+  BreakConfig,
+} from "@/types/schedule-config";
+import { markSchedulesAsDeprecatedForLevel } from "@/modules/schedules/actions/compatibility";
+import {
+  DEFAULT_BASIC_CONFIG,
+  DEFAULT_MIDDLE_CONFIG,
+} from "@/types/schedule-config";
 
 /**
  * Obtener configuración de horario para un nivel específico
@@ -19,9 +26,9 @@ export async function getScheduleConfigForLevel(
   academicLevel: AcademicLevel
 ): Promise<ScheduleLevelConfig> {
   const schoolIds = await getUserSchoolIds();
-  
+
   if (!schoolIds.includes(schoolId)) {
-    throw new Error('No tienes acceso a este colegio');
+    throw new Error("No tienes acceso a este colegio");
   }
 
   const config = await prisma.scheduleLevelConfig.findUnique({
@@ -35,10 +42,9 @@ export async function getScheduleConfigForLevel(
 
   if (!config) {
     // Retornar configuración por defecto
-    const defaultConfig = academicLevel === 'BASIC' 
-      ? DEFAULT_BASIC_CONFIG 
-      : DEFAULT_MIDDLE_CONFIG;
-    
+    const defaultConfig =
+      academicLevel === "BASIC" ? DEFAULT_BASIC_CONFIG : DEFAULT_MIDDLE_CONFIG;
+
     return { ...defaultConfig, schoolId };
   }
 
@@ -63,20 +69,20 @@ export async function saveScheduleConfigForLevel(
   config: ScheduleLevelConfig
 ): Promise<ScheduleLevelConfig> {
   const schoolIds = await getUserSchoolIds();
-  
+
   if (!schoolIds.includes(config.schoolId)) {
-    throw new Error('No tienes acceso a este colegio');
+    throw new Error("No tienes acceso a este colegio");
   }
 
   // Validar que blockDuration sea múltiplo de 15
   if (config.blockDuration % 15 !== 0) {
-    throw new Error('La duración de bloques debe ser múltiplo de 15 minutos');
+    throw new Error("La duración de bloques debe ser múltiplo de 15 minutos");
   }
 
   // Validar que las duraciones de recreos sean múltiplos de 15
   for (const breakConfig of config.breaks) {
     if (breakConfig.duration % 15 !== 0) {
-      throw new Error('La duración de recreos debe ser múltiplo de 15 minutos');
+      throw new Error("La duración de recreos debe ser múltiplo de 15 minutos");
     }
   }
 
@@ -93,11 +99,11 @@ export async function saveScheduleConfigForLevel(
   });
 
   // Detectar cambios críticos
-  const hasCriticalChanges = previousConfig && (
-    previousConfig.startTime !== config.startTime ||
-    previousConfig.endTime !== config.endTime ||
-    previousConfig.blockDuration !== config.blockDuration
-  );
+  const hasCriticalChanges =
+    previousConfig &&
+    (previousConfig.startTime !== config.startTime ||
+      previousConfig.endTime !== config.endTime ||
+      previousConfig.blockDuration !== config.blockDuration);
 
   const savedConfig = await prisma.scheduleLevelConfig.upsert({
     where: {
@@ -124,7 +130,10 @@ export async function saveScheduleConfigForLevel(
 
   // Si hubo cambios críticos, marcar schedules existentes como obsoletos
   if (hasCriticalChanges) {
-    await markSchedulesAsDeprecatedForLevel(config.schoolId, config.academicLevel);
+    await markSchedulesAsDeprecatedForLevel(
+      config.schoolId,
+      config.academicLevel
+    );
   }
 
   return {
@@ -153,7 +162,7 @@ export async function getScheduleConfigForCourse(
   });
 
   if (!course) {
-    throw new Error('Curso no encontrado');
+    throw new Error("Curso no encontrado");
   }
 
   return getScheduleConfigForLevel(
@@ -163,22 +172,80 @@ export async function getScheduleConfigForCourse(
 }
 
 /**
+ * Obtener configuración para un profesor específico (basado en su colegio)
+ * Para profesores, usamos una configuración flexible que cubre todos los niveles
+ */
+export async function getScheduleConfigForTeacher(
+  teacherId: string
+): Promise<ScheduleLevelConfig> {
+  const teacher = await prisma.teacher.findUnique({
+    where: { id: teacherId },
+    select: {
+      schoolId: true,
+    },
+  });
+
+  if (!teacher) {
+    throw new Error("Profesor no encontrado");
+  }
+
+  // Obtener todas las configuraciones del colegio para usar la más amplia
+  const configs = await prisma.scheduleLevelConfig.findMany({
+    where: { schoolId: teacher.schoolId },
+  });
+
+  if (configs.length === 0) {
+    // Si no hay configuraciones, retornar configuración por defecto flexible
+    return {
+      ...DEFAULT_MIDDLE_CONFIG,
+      schoolId: teacher.schoolId,
+    };
+  }
+
+  // Encontrar la configuración más amplia (horario más largo)
+  const configsWithBreaks = configs.map((config) => ({
+    id: config.id,
+    schoolId: config.schoolId,
+    academicLevel: config.academicLevel as AcademicLevel,
+    startTime: config.startTime,
+    endTime: config.endTime,
+    blockDuration: config.blockDuration,
+    breaks: JSON.parse(config.breaks),
+  }));
+
+  // Ordenar por horario más amplio (inicio más temprano y fin más tardío)
+  const sortedConfigs = configsWithBreaks.sort((a, b) => {
+    const aStart = parseInt(a.startTime.replace(":", ""));
+    const bStart = parseInt(b.startTime.replace(":", ""));
+    const aEnd = parseInt(a.endTime.replace(":", ""));
+    const bEnd = parseInt(b.endTime.replace(":", ""));
+    
+    // Preferir inicio más temprano
+    if (aStart !== bStart) return aStart - bStart;
+    // Si tienen mismo inicio, preferir fin más tardío
+    return bEnd - aEnd;
+  });
+
+  return sortedConfigs[0];
+}
+
+/**
  * Obtener todas las configuraciones de un colegio
  */
 export async function getAllScheduleConfigsForSchool(
   schoolId: string
 ): Promise<ScheduleLevelConfig[]> {
   const schoolIds = await getUserSchoolIds();
-  
+
   if (!schoolIds.includes(schoolId)) {
-    throw new Error('No tienes acceso a este colegio');
+    throw new Error("No tienes acceso a este colegio");
   }
 
   const configs = await prisma.scheduleLevelConfig.findMany({
     where: { schoolId },
   });
 
-  return configs.map(config => ({
+  return configs.map((config) => ({
     id: config.id,
     schoolId: config.schoolId,
     academicLevel: config.academicLevel as AcademicLevel,

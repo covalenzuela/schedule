@@ -38,11 +38,14 @@ function generateTimeSlots(config: {
   endTime: string;
   blockDuration: number;
   breakDuration: number;
-  lunchBreakConfig: Record<string, { enabled: boolean; start: string; end: string }>;
+  lunchBreakConfig: Record<
+    string,
+    { enabled: boolean; start: string; end: string }
+  >;
   day: string;
 }): TimeSlot[] {
   const slots: TimeSlot[] = [];
-  
+
   let currentMinutes = timeToMinutes(config.startTime);
   const endMinutes = timeToMinutes(config.endTime);
 
@@ -123,12 +126,15 @@ export async function generateScheduleForCourse(
   const startTime = Date.now();
 
   try {
-    console.log("[Generation] Iniciando generación para curso:", config.courseId);
+    console.log(
+      "[Generation] Iniciando generación para curso:",
+      config.courseId
+    );
 
     // 1. Cargar todos los datos necesarios de una vez (evitar N+1)
     const course = await prisma.course.findUnique({
       where: { id: config.courseId },
-      include: { 
+      include: {
         school: true,
       },
     });
@@ -148,11 +154,11 @@ export async function generateScheduleForCourse(
     // Cargar todas las asignaturas de una vez
     const subjects = await prisma.subject.findMany({
       where: {
-        id: { in: config.subjects.map(s => s.subjectId) }
-      }
+        id: { in: config.subjects.map((s) => s.subjectId) },
+      },
     });
 
-    const subjectsMap = new Map(subjects.map(s => [s.id, s]));
+    const subjectsMap = new Map(subjects.map((s) => [s.id, s]));
 
     // Cargar todos los profesores con su disponibilidad de una vez
     const allTeachers = await prisma.teacher.findMany({
@@ -165,42 +171,48 @@ export async function generateScheduleForCourse(
         },
         teacherSubjects: {
           include: {
-            subject: true
-          }
-        }
+            subject: true,
+          },
+        },
       },
     });
 
     // Crear mapa de profesores por asignatura
     const teachersBySubject = new Map<string, typeof allTeachers>();
-    config.subjects.forEach(sc => {
-      const subjectTeachers = allTeachers.filter(t => 
-        t.teacherSubjects.some(ts => ts.subjectId === sc.subjectId)
+    config.subjects.forEach((sc) => {
+      const subjectTeachers = allTeachers.filter((t) =>
+        t.teacherSubjects.some((ts) => ts.subjectId === sc.subjectId)
       );
-      
+
       // Priorizar profesor preferido si existe
       if (sc.preferredTeacherId) {
-        const preferredIndex = subjectTeachers.findIndex(t => t.id === sc.preferredTeacherId);
+        const preferredIndex = subjectTeachers.findIndex(
+          (t) => t.id === sc.preferredTeacherId
+        );
         if (preferredIndex > 0) {
           const preferred = subjectTeachers.splice(preferredIndex, 1)[0];
           subjectTeachers.unshift(preferred);
         }
       }
-      
+
       teachersBySubject.set(sc.subjectId, subjectTeachers);
     });
 
     console.log("[Generation] Datos cargados:", {
       subjects: subjects.length,
       teachers: allTeachers.length,
-      duration: `${Date.now() - startTime}ms`
+      duration: `${Date.now() - startTime}ms`,
     });
 
     // Cache para validaciones de profesores
     const teacherValidationCache = new Map<string, boolean>();
-    
-    const getCacheKey = (teacherId: string, day: string, startTime: string, endTime: string) => 
-      `${teacherId}:${day}:${startTime}:${endTime}`;
+
+    const getCacheKey = (
+      teacherId: string,
+      day: string,
+      startTime: string,
+      endTime: string
+    ) => `${teacherId}:${day}:${startTime}:${endTime}`;
 
     // 2. Rastreo de horas asignadas por asignatura
     const subjectHoursAssigned: Record<string, number> = {};
@@ -210,28 +222,31 @@ export async function generateScheduleForCourse(
 
     // Rastreo de bloques por día para cada profesor
     const teacherBlocksPerDay = new Map<string, Map<string, number>>();
-    
+
     // Rastreo de bloques por día para cada asignatura (para distribución uniforme)
     const subjectBlocksPerDay = new Map<string, Map<string, number>>();
-    config.subjects.forEach(s => {
+    config.subjects.forEach((s) => {
       subjectBlocksPerDay.set(s.subjectId, new Map());
     });
 
     // 3. Generar todos los slots de tiempo para toda la semana de una vez
     const allTimeSlots = new Map<string, TimeSlot[]>();
     for (const day of DAYS) {
-      allTimeSlots.set(day, generateTimeSlots({
-        ...schoolConfig,
+      allTimeSlots.set(
         day,
-      }));
+        generateTimeSlots({
+          ...schoolConfig,
+          day,
+        })
+      );
     }
 
     // Crear lista de todas las combinaciones (día, slot, asignatura) para distribución uniforme
     type SlotAssignment = {
       day: string;
       slot: TimeSlot;
-      subjectConfig: typeof config.subjects[0];
-      subject: typeof subjects[0];
+      subjectConfig: (typeof config.subjects)[0];
+      subject: (typeof subjects)[0];
       priority: number;
     };
 
@@ -249,8 +264,9 @@ export async function generateScheduleForCourse(
           // Calcular prioridad: asignaturas con menos bloques asignados tienen mayor prioridad
           const hoursAssigned = subjectHoursAssigned[subject.id] || 0;
           const hoursNeeded = subjectConfig.hoursPerWeek;
-          const blocksThisDay = subjectBlocksPerDay.get(subject.id)!.get(day) || 0;
-          
+          const blocksThisDay =
+            subjectBlocksPerDay.get(subject.id)!.get(day) || 0;
+
           // Prioridad más alta = más urgente de asignar
           // - Asignaturas con menos cobertura
           // - Días con menos bloques de esta asignatura
@@ -261,7 +277,7 @@ export async function generateScheduleForCourse(
             slot,
             subjectConfig,
             subject,
-            priority
+            priority,
           });
         }
       }
@@ -270,7 +286,9 @@ export async function generateScheduleForCourse(
     // Ordenar asignaciones por prioridad (mayor a menor)
     possibleAssignments.sort((a, b) => b.priority - a.priority);
 
-    console.log(`[Generation] Total de posibles asignaciones: ${possibleAssignments.length}`);
+    console.log(
+      `[Generation] Total de posibles asignaciones: ${possibleAssignments.length}`
+    );
 
     // 4. Iterar sobre asignaciones en orden de prioridad
     for (const assignment of possibleAssignments) {
@@ -311,7 +329,7 @@ export async function generateScheduleForCourse(
 
       if (availableTeachers.length === 0) {
         // Solo advertir una vez por asignatura
-        if (!warnings.some(w => w.includes(subject.name))) {
+        if (!warnings.some((w) => w.includes(subject.name))) {
           warnings.push(`No hay profesores disponibles para ${subject.name}`);
         }
         continue;
@@ -327,7 +345,7 @@ export async function generateScheduleForCourse(
         }
         const dayBlocks = teacherBlocksPerDay.get(teacherDayKey)!;
         const blocksCount = dayBlocks.size;
-        
+
         if (blocksCount >= 4) continue;
 
         // Verificar bloques consecutivos del mismo profesor
@@ -340,9 +358,14 @@ export async function generateScheduleForCourse(
         if (hasConsecutive) continue;
 
         // Usar cache para validación
-        const cacheKey = getCacheKey(teacher.id, day, slot.startTime, slot.endTime);
+        const cacheKey = getCacheKey(
+          teacher.id,
+          day,
+          slot.startTime,
+          slot.endTime
+        );
         let isValid = teacherValidationCache.get(cacheKey);
-        
+
         if (isValid === undefined) {
           const validation = await validateTeacherSchedule(
             teacher.id,
@@ -358,7 +381,7 @@ export async function generateScheduleForCourse(
         if (isValid) {
           // ✅ Asignar bloque
           const blockId = `gen-${Date.now()}-${generatedBlocks.length}`;
-          
+
           generatedBlocks.push({
             id: blockId,
             day,
@@ -375,9 +398,10 @@ export async function generateScheduleForCourse(
           const hoursInBlock = slot.duration / 60;
           subjectHoursAssigned[subject.id] += hoursInBlock;
           dayBlocks.set(slot.startTime, 1);
-          
+
           // Actualizar contador de bloques por día de la asignatura
-          const currentDayBlocks = subjectBlocksPerDay.get(subject.id)!.get(day) || 0;
+          const currentDayBlocks =
+            subjectBlocksPerDay.get(subject.id)!.get(day) || 0;
           subjectBlocksPerDay.get(subject.id)!.set(day, currentDayBlocks + 1);
 
           assigned = true;
@@ -392,8 +416,9 @@ export async function generateScheduleForCourse(
       0
     );
     const totalAssignedBlocks = generatedBlocks.length;
-    
-    const uniqueTeachers = new Set(generatedBlocks.map((b) => b.teacherId)).size;
+
+    const uniqueTeachers = new Set(generatedBlocks.map((b) => b.teacherId))
+      .size;
 
     const subjectsCoverage = config.subjects.map((s) => {
       const assigned = subjectHoursAssigned[s.subjectId] || 0;
@@ -449,9 +474,7 @@ export async function generateScheduleForCourse(
     console.error("[Generation] ❌ Error generando horario:", error);
     return {
       success: false,
-      errors: [
-        error instanceof Error ? error.message : "Error desconocido",
-      ],
+      errors: [error instanceof Error ? error.message : "Error desconocido"],
     };
   }
 }

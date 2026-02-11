@@ -2,10 +2,10 @@
  * ➕ AddSchoolButton - Botón para abrir el modal de crear colegio
  */
 
-'use client';
+"use client";
 
-import { useModal } from '@/contexts/ModalContext';
-import { CreateSchoolForm } from './CreateSchoolForm';
+import { useModal } from "@/contexts/ModalContext";
+import { CreateSchoolForm } from "./CreateSchoolForm";
 
 interface AddSchoolButtonProps {
   onSchoolCreated?: () => void;
@@ -15,7 +15,10 @@ export function AddSchoolButton({ onSchoolCreated }: AddSchoolButtonProps) {
   const { openModal } = useModal();
 
   const handleClick = () => {
-    openModal(<CreateSchoolForm onSchoolCreated={onSchoolCreated} />, '🏫 Crear Nuevo Colegio');
+    openModal(
+      <CreateSchoolForm onSchoolCreated={onSchoolCreated} />,
+      "🏫 Crear Nuevo Colegio"
+    );
   };
 
   return (

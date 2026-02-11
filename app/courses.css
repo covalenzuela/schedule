@@ -232,7 +232,11 @@
 }
 
 .schools-card-btn-secondary {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(168, 85, 247, 0.9));
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.9),
+    rgba(168, 85, 247, 0.9)
+  );
   color: #fff;
   border: 1px solid rgba(168, 85, 247, 0.3);
 }
@@ -240,7 +244,11 @@
 .schools-card-btn-secondary:hover {
   transform: translateY(-1px);
   box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
-  background: linear-gradient(135deg, rgba(139, 92, 246, 1), rgba(168, 85, 247, 1));
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 1),
+    rgba(168, 85, 247, 1)
+  );
 }
 
 .schools-card-btn-danger {

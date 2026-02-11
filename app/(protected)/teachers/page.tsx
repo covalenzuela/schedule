@@ -6,6 +6,7 @@ import {
   getTeachers,
   deleteTeacher,
   createTeacher,
+  getTeacherAvailability,
 } from "@/modules/teachers/actions";
 import { getSchools } from "@/modules/schools/actions";
 import { AddTeacherButton } from "@/modules/teachers/components/AddTeacherButton";
@@ -41,6 +42,32 @@ export default function TeachersPage() {
     setTeachers(teachersData);
     setSchools(schoolsData);
     setIsLoading(false);
+  };
+
+  const handleDownloadAvailability = async (teacher: any) => {
+    const availability = await getTeacherAvailability(teacher.id);
+
+    let content = `Disponibilidad de ${teacher.firstName} ${teacher.lastName}\n`;
+    content += `Año académico: ${new Date().getFullYear()}\n\n`;
+
+    if (availability.length === 0) {
+      content += "No hay disponibilidad registrada.";
+    } else {
+      availability.forEach((slot: any) => {
+        content += `- ${slot.dayOfWeek}: ${slot.startTime} - ${slot.endTime}\n`;
+      });
+    }
+
+    const blob = new Blob([content], {
+      type: "text/plain;charset=utf-8",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Disponibilidad_${teacher.firstName}_${teacher.lastName}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleDeleteTeacher = (teacher: Teacher) => {
@@ -440,8 +467,11 @@ export default function TeachersPage() {
                   >
                     📅 Disponibilidad
                   </button>
-                  <button className="schools-card-btn schools-card-btn-ghost">
-                    Editar
+                  <button
+                    className="schools-card-btn schools-card-btn-ghost"
+                    onClick={() => handleDownloadAvailability(teacher)}
+                  >
+                    Descargar 👇 disponibilidad
                   </button>
                   <button
                     className="schools-card-btn schools-card-btn-danger"

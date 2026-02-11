@@ -5,7 +5,11 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { parseConfigSnapshot, createConfigSnapshot, checkScheduleCompatibility } from "@/lib/utils/schedule-compatibility";
+import {
+  parseConfigSnapshot,
+  createConfigSnapshot,
+  checkScheduleCompatibility,
+} from "@/lib/utils/schedule-compatibility";
 import { getSession } from "@/lib/session";
 import { getScheduleConfigForLevel } from "@/modules/schools/actions/schedule-config";
 
@@ -53,7 +57,12 @@ export async function updateScheduleConfigSnapshot(
   blockDuration: number,
   academicLevel: string
 ) {
-  const snapshot = createConfigSnapshot(startTime, endTime, blockDuration, academicLevel);
+  const snapshot = createConfigSnapshot(
+    startTime,
+    endTime,
+    blockDuration,
+    academicLevel
+  );
 
   await prisma.schedule.update({
     where: { id: scheduleId },

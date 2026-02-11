@@ -4,23 +4,24 @@
  */
 
 export const siteConfig = {
-  name: "BBschedule",
+  name: "Class & Time",
   description: "Sistema de Horarios Escolares",
-  tagline: "La plataforma líder en gestión de horarios escolares",
-  url: "https://bbschedule.com",
-  domain: "bbschedule.com",
+  tagline: "Plataforma para la gestión de horarios escolares",
+  url: "https://classtime.com",
+  domain: "classtime.com",
   email: {
-    support: "soporte@bbschedule.com",
-    demo: "demo@bbschedule.com",
-    contact: "contacto@bbschedule.com",
+    support: "soporte@classtime.com",
+    demo: "demo@classtime.com",
+    contact: "contacto@classtime.com",
   },
   social: {
-    twitter: "@bbschedule",
-    github: "https://github.com/bbschedule",
+    twitter: "@classtime",
+    github: "https://github.com/classtime",
   },
   metadata: {
-    title: "BBschedule - Sistema de Horarios Escolares",
-    description: "La plataforma más avanzada para gestionar horarios escolares. Automatiza la asignación, detecta conflictos y optimiza recursos con IA.",
+    title: "Class&Time - Sistema de Horarios Escolares",
+    description:
+      "La plataforma más avanzada para gestionar horarios escolares. Automatiza la asignación, detecta conflictos y optimiza recursos con IA.",
     keywords: ["horarios", "escolares", "gestión", "educación", "saas"],
   },
 } as const;

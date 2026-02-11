@@ -1,28 +1,32 @@
 /**
  * 🏫 Server Actions - Schools
- * 
+ *
  * Server Actions de Next.js 16 para gestionar escuelas
  * Estas funciones se ejecutan en el servidor
  */
 
-'use server';
+"use server";
 
-import { revalidatePath } from 'next/cache';
-import { prisma } from '@/lib/prisma';
-import { getCurrentUser, getUserSchoolIds, userHasAccessToSchool } from '@/lib/auth-helpers';
-import { CreateSchoolInput, UpdateSchoolInput, School } from '@/types';
+import { revalidatePath } from "next/cache";
+import { prisma } from "@/lib/prisma";
+import {
+  getCurrentUser,
+  getUserSchoolIds,
+  userHasAccessToSchool,
+} from "@/lib/auth-helpers";
+import { CreateSchoolInput, UpdateSchoolInput, School } from "@/types";
 
 export async function getSchools(): Promise<School[]> {
   const schoolIds = await getUserSchoolIds();
-  
+
   const schools = await prisma.school.findMany({
     where: {
       id: { in: schoolIds },
     },
-    orderBy: { name: 'asc' },
+    orderBy: { name: "asc" },
   });
-  
-  return schools.map(school => ({
+
+  return schools.map((school) => ({
     ...school,
     phone: school.phone || undefined,
     email: school.email || undefined,
@@ -33,17 +37,17 @@ export async function getSchools(): Promise<School[]> {
 
 export async function getSchoolById(id: string): Promise<School | null> {
   const hasAccess = await userHasAccessToSchool(id);
-  
+
   if (!hasAccess) {
-    throw new Error('No tienes acceso a este colegio');
+    throw new Error("No tienes acceso a este colegio");
   }
-  
+
   const school = await prisma.school.findUnique({
     where: { id },
   });
-  
+
   if (!school) return null;
-  
+
   return {
     ...school,
     phone: school.phone || undefined,
@@ -55,7 +59,7 @@ export async function getSchoolById(id: string): Promise<School | null> {
 
 export async function createSchool(data: CreateSchoolInput): Promise<School> {
   const user = await getCurrentUser();
-  
+
   const school = await prisma.school.create({
     data: {
       name: data.name,
@@ -66,14 +70,14 @@ export async function createSchool(data: CreateSchoolInput): Promise<School> {
       users: {
         create: {
           userId: user.id,
-          role: 'admin',
+          role: "admin",
         },
       },
     },
   });
-  
-  revalidatePath('/schools');
-  
+
+  revalidatePath("/schools");
+
   return {
     ...school,
     phone: school.phone || undefined,
@@ -83,23 +87,25 @@ export async function createSchool(data: CreateSchoolInput): Promise<School> {
   };
 }
 
-export async function updateSchool(data: UpdateSchoolInput): Promise<School | null> {
+export async function updateSchool(
+  data: UpdateSchoolInput
+): Promise<School | null> {
   const { id, ...updateData } = data;
-  
+
   const hasAccess = await userHasAccessToSchool(id);
   if (!hasAccess) {
-    throw new Error('No tienes acceso a este colegio');
+    throw new Error("No tienes acceso a este colegio");
   }
-  
+
   try {
     const school = await prisma.school.update({
       where: { id },
       data: updateData,
     });
-    
-    revalidatePath('/schools');
+
+    revalidatePath("/schools");
     revalidatePath(`/schools/${id}`);
-    
+
     return {
       ...school,
       phone: school.phone || undefined,
@@ -115,15 +121,15 @@ export async function updateSchool(data: UpdateSchoolInput): Promise<School | nu
 export async function deleteSchool(id: string): Promise<boolean> {
   const hasAccess = await userHasAccessToSchool(id);
   if (!hasAccess) {
-    throw new Error('No tienes acceso a este colegio');
+    throw new Error("No tienes acceso a este colegio");
   }
-  
+
   try {
     await prisma.school.delete({
       where: { id },
     });
-    
-    revalidatePath('/schools');
+
+    revalidatePath("/schools");
     return true;
   } catch (error) {
     return false;
@@ -136,7 +142,7 @@ export async function deleteSchool(id: string): Promise<boolean> {
 export async function getSchoolScheduleConfig(schoolId: string) {
   const hasAccess = await userHasAccessToSchool(schoolId);
   if (!hasAccess) {
-    throw new Error('No tienes acceso a este colegio');
+    throw new Error("No tienes acceso a este colegio");
   }
 
   const school = await prisma.school.findUnique({
@@ -155,21 +161,44 @@ export async function getSchoolScheduleConfig(schoolId: string) {
   });
 
   if (!school) {
-    throw new Error('Colegio no encontrado');
+    throw new Error("Colegio no encontrado");
   }
 
   // Parsear configuración de almuerzo por día
-  let lunchBreakByDay: Record<string, {enabled: boolean, start: string, end: string}> = {};
+  let lunchBreakByDay: Record<
+    string,
+    { enabled: boolean; start: string; end: string }
+  > = {};
   try {
     lunchBreakByDay = JSON.parse(school.lunchBreakConfig);
   } catch (e) {
     // Si falla el parsing, usar valores por defecto
     lunchBreakByDay = {
-      MONDAY: { enabled: school.lunchBreakEnabled, start: school.lunchBreakStart, end: school.lunchBreakEnd },
-      TUESDAY: { enabled: school.lunchBreakEnabled, start: school.lunchBreakStart, end: school.lunchBreakEnd },
-      WEDNESDAY: { enabled: school.lunchBreakEnabled, start: school.lunchBreakStart, end: school.lunchBreakEnd },
-      THURSDAY: { enabled: school.lunchBreakEnabled, start: school.lunchBreakStart, end: school.lunchBreakEnd },
-      FRIDAY: { enabled: school.lunchBreakEnabled, start: school.lunchBreakStart, end: school.lunchBreakEnd },
+      MONDAY: {
+        enabled: school.lunchBreakEnabled,
+        start: school.lunchBreakStart,
+        end: school.lunchBreakEnd,
+      },
+      TUESDAY: {
+        enabled: school.lunchBreakEnabled,
+        start: school.lunchBreakStart,
+        end: school.lunchBreakEnd,
+      },
+      WEDNESDAY: {
+        enabled: school.lunchBreakEnabled,
+        start: school.lunchBreakStart,
+        end: school.lunchBreakEnd,
+      },
+      THURSDAY: {
+        enabled: school.lunchBreakEnabled,
+        start: school.lunchBreakStart,
+        end: school.lunchBreakEnd,
+      },
+      FRIDAY: {
+        enabled: school.lunchBreakEnabled,
+        start: school.lunchBreakStart,
+        end: school.lunchBreakEnd,
+      },
     };
   }
 
@@ -202,12 +231,15 @@ export async function updateSchoolScheduleConfig(
       startTime: string;
       endTime: string;
     };
-    lunchBreakByDay?: Record<string, {enabled: boolean, start: string, end: string}>; // NUEVO
+    lunchBreakByDay?: Record<
+      string,
+      { enabled: boolean; start: string; end: string }
+    >; // NUEVO
   }
 ) {
   const hasAccess = await userHasAccessToSchool(schoolId);
   if (!hasAccess) {
-    throw new Error('No tienes acceso a este colegio');
+    throw new Error("No tienes acceso a este colegio");
   }
 
   const updateData: any = {
@@ -230,7 +262,7 @@ export async function updateSchoolScheduleConfig(
     data: updateData,
   });
 
-  revalidatePath('/schools');
-  revalidatePath('/schedules');
+  revalidatePath("/schools");
+  revalidatePath("/schedules");
   return { success: true };
 }

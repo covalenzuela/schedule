@@ -8,7 +8,7 @@
 export interface ScheduleGenerationConfig {
   courseId: string;
   academicYear: number;
-  
+
   // Asignaturas requeridas con horas semanales
   subjects: Array<{
     subjectId: string;

@@ -12,7 +12,7 @@ import { useModal } from "@/contexts/ModalContext";
 import { Input, Select } from "@/components/ui";
 import { ImportSubjectsModal } from "@/modules/subjects/components/ImportSubjectsModal";
 import type { School } from "@/types";
-import "../../subjects.css";
+import "../../subjects.css"; 
 
 // Tipo para subject con relaciones incluidas
 type SubjectWithRelations = {
@@ -478,7 +478,9 @@ export default function SubjectsPage() {
                 }}
                 onClick={() => {
                   if (!formData.schoolId && schools.length > 1) {
-                    alert('Por favor, selecciona un colegio primero en el formulario de abajo');
+                    alert(
+                      "Por favor, selecciona un colegio primero en el formulario de abajo"
+                    );
                     setShowCreateForm(true);
                     return;
                   }

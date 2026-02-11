@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { getCourses } from "@/modules/courses/actions";
 import { getTeachers } from "@/modules/teachers/actions";
 import { ScheduleEditor } from "@/modules/schedules/components/ScheduleEditor";
+
+/* styles */
 import "../../../schools.css";
 import "../../../schedules.css";
 import "../../../schedule-grid.css";

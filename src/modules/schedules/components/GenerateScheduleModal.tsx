@@ -87,7 +87,7 @@ export function GenerateScheduleModal({
     value: string | number
   ) => {
     const updated = [...selectedSubjects];
-    
+
     if (field === "subjectId") {
       const subject = availableSubjects.find((s) => s.id === value);
       if (subject) {
@@ -154,7 +154,10 @@ export function GenerateScheduleModal({
 
 Cobertura por asignatura:
 ${result.stats.subjectsCoverage
-  .map((sc) => `  • ${sc.subject}: ${sc.assigned}/${sc.required} horas (${sc.percentage}%)`)
+  .map(
+    (sc) =>
+      `  • ${sc.subject}: ${sc.assigned}/${sc.required} horas (${sc.percentage}%)`
+  )
   .join("\n")}`
           : "";
 
@@ -198,121 +201,130 @@ ${result.stats.subjectsCoverage
             ✕
           </button>
         </div>
-        
+
         <div className="generate-schedule-modal">
-        <div className="modal-intro">
-          <p>
-            Configura las asignaturas y horas semanales requeridas. El sistema
-            generará automáticamente un horario considerando:
-          </p>
-          <ul>
-            <li>✅ Disponibilidad de profesores</li>
-            <li>✅ Prevención de conflictos de horario</li>
-            <li>✅ Distribución óptima en la semana</li>
-          </ul>
-        </div>
+          <div className="modal-intro">
+            <p>
+              Configura las asignaturas y horas semanales requeridas. El sistema
+              generará automáticamente un horario considerando:
+            </p>
+            <ul>
+              <li>✅ Disponibilidad de profesores</li>
+              <li>✅ Prevención de conflictos de horario</li>
+              <li>✅ Distribución óptima en la semana</li>
+            </ul>
+          </div>
 
-        {loadingSubjects ? (
-          <div className="loading-subjects">Cargando asignaturas...</div>
-        ) : (
-          <>
-            <div className="subjects-config">
-              <div className="subjects-header">
-                <h3>Asignaturas y Horas</h3>
-                <button
-                  onClick={handleAddSubject}
-                  className="btn-add-subject"
-                  disabled={
-                    selectedSubjects.length === availableSubjects.length
-                  }
-                >
-                  ➕ Agregar Asignatura
-                </button>
-              </div>
-
-              {selectedSubjects.length === 0 ? (
-                <div className="empty-subjects">
-                  <p>
-                    📚 No hay asignaturas configuradas. Haz clic en "Agregar
-                    Asignatura" para empezar.
-                  </p>
+          {loadingSubjects ? (
+            <div className="loading-subjects">Cargando asignaturas...</div>
+          ) : (
+            <>
+              <div className="subjects-config">
+                <div className="subjects-header">
+                  <h3>Asignaturas y Horas</h3>
+                  <button
+                    onClick={handleAddSubject}
+                    className="btn-add-subject"
+                    disabled={
+                      selectedSubjects.length === availableSubjects.length
+                    }
+                  >
+                    ➕ Agregar Asignatura
+                  </button>
                 </div>
-              ) : (
-                <div className="subjects-list">
-                  {selectedSubjects.map((subject, index) => (
-                    <div key={index} className="subject-item">
-                      <select
-                        value={subject.subjectId}
-                        onChange={(e) =>
-                          handleSubjectChange(index, "subjectId", e.target.value)
-                        }
-                        className="subject-select"
-                      >
-                        {availableSubjects.map((s) => (
-                          <option
-                            key={s.id}
-                            value={s.id}
-                            disabled={selectedSubjects.some(
-                              (sel, i) => i !== index && sel.subjectId === s.id
-                            )}
-                          >
-                            {s.name}
-                          </option>
-                        ))}
-                      </select>
 
-                      <div className="hours-input-group">
-                        <input
-                          type="number"
-                          min="1"
-                          max="20"
-                          value={subject.hoursPerWeek}
+                {selectedSubjects.length === 0 ? (
+                  <div className="empty-subjects">
+                    <p>
+                      📚 No hay asignaturas configuradas. Haz clic en "Agregar
+                      Asignatura" para empezar.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="subjects-list">
+                    {selectedSubjects.map((subject, index) => (
+                      <div key={index} className="subject-item">
+                        <select
+                          value={subject.subjectId}
                           onChange={(e) =>
                             handleSubjectChange(
                               index,
-                              "hoursPerWeek",
+                              "subjectId",
                               e.target.value
                             )
                           }
-                          className="hours-input"
-                        />
-                        <span className="hours-label">hrs/semana</span>
+                          className="subject-select"
+                        >
+                          {availableSubjects.map((s) => (
+                            <option
+                              key={s.id}
+                              value={s.id}
+                              disabled={selectedSubjects.some(
+                                (sel, i) =>
+                                  i !== index && sel.subjectId === s.id
+                              )}
+                            >
+                              {s.name}
+                            </option>
+                          ))}
+                        </select>
+
+                        <div className="hours-input-group">
+                          <input
+                            type="number"
+                            min="1"
+                            max="20"
+                            value={subject.hoursPerWeek}
+                            onChange={(e) =>
+                              handleSubjectChange(
+                                index,
+                                "hoursPerWeek",
+                                e.target.value
+                              )
+                            }
+                            className="hours-input"
+                          />
+                          <span className="hours-label">hrs/semana</span>
+                        </div>
+
+                        <button
+                          onClick={() => handleRemoveSubject(index)}
+                          className="btn-remove-subject"
+                          title="Eliminar"
+                        >
+                          🗑️
+                        </button>
                       </div>
+                    ))}
+                  </div>
+                )}
 
-                      <button
-                        onClick={() => handleRemoveSubject(index)}
-                        className="btn-remove-subject"
-                        title="Eliminar"
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+                {totalHours > 0 && (
+                  <div className="total-hours">
+                    <strong>Total:</strong> {totalHours} horas semanales
+                  </div>
+                )}
+              </div>
 
-              {totalHours > 0 && (
-                <div className="total-hours">
-                  <strong>Total:</strong> {totalHours} horas semanales
-                </div>
-              )}
-            </div>
-
-            <div className="modal-actions">
-              <button
-                onClick={handleGenerate}
-                disabled={loading || selectedSubjects.length === 0}
-                className="btn btn-primary"
-              >
-                {loading ? "⏳ Generando..." : "🤖 Generar Horario"}
-              </button>
-              <button onClick={onClose} disabled={loading} className="btn btn-secondary">
-                Cancelar
-              </button>
-            </div>
-          </>
-        )}
-      </div>
+              <div className="modal-actions">
+                <button
+                  onClick={handleGenerate}
+                  disabled={loading || selectedSubjects.length === 0}
+                  className="btn btn-primary"
+                >
+                  {loading ? "⏳ Generando..." : "🤖 Generar Horario"}
+                </button>
+                <button
+                  onClick={onClose}
+                  disabled={loading}
+                  className="btn btn-secondary"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

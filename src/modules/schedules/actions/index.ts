@@ -3,7 +3,10 @@
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
-import { validateTeacherSchedule, hasTeacherScheduleConflict } from "@/modules/teachers/actions";
+import {
+  validateTeacherSchedule,
+  hasTeacherScheduleConflict,
+} from "@/modules/teachers/actions";
 import { generateScheduleForCourse } from "./generation";
 import type { ScheduleGenerationConfig } from "../types";
 
@@ -36,9 +39,7 @@ async function findOrCreateSubject(
   return subject;
 }
 
-async function findTeacherById(
-  teacherId: string
-): Promise<string | null> {
+async function findTeacherById(teacherId: string): Promise<string | null> {
   // Solo buscar profesor por ID, no crear
   const teacher = await prisma.teacher.findUnique({
     where: { id: teacherId },
@@ -147,7 +148,13 @@ export async function getSchedulesForCourse(courseId: string) {
       );
       schedules[0].blocks.forEach((b, idx) => {
         console.log(
-          `[getSchedulesForCourse] Bloque ${idx + 1}: ${b.dayOfWeek} ${b.startTime}-${b.endTime} | ${b.subject.name} | Profesor: ${b.teacher ? `${b.teacher.firstName} ${b.teacher.lastName}` : 'Sin asignar'}`
+          `[getSchedulesForCourse] Bloque ${idx + 1}: ${b.dayOfWeek} ${
+            b.startTime
+          }-${b.endTime} | ${b.subject.name} | Profesor: ${
+            b.teacher
+              ? `${b.teacher.firstName} ${b.teacher.lastName}`
+              : "Sin asignar"
+          }`
         );
       });
     }
@@ -293,7 +300,7 @@ export async function saveSchedule(data: {
           });
           const teacherName = teacherInfo
             ? `${teacherInfo.firstName} ${teacherInfo.lastName}`
-            : 'Profesor';
+            : "Profesor";
 
           const conflictMessages = conflictCheck.conflictingBlocks!.map(
             (conflict) =>
@@ -301,13 +308,16 @@ export async function saveSchedule(data: {
           );
 
           validationErrors.push(
-            `${teacherName} (${block.subject}, ${block.day} ${block.startTime}-${block.endTime}): ${conflictMessages.join(', ')}`
+            `${teacherName} (${block.subject}, ${block.day} ${
+              block.startTime
+            }-${block.endTime}): ${conflictMessages.join(", ")}`
           );
         }
       }
 
       // Si hay conflictos reales, devolver como warnings en lugar de bloquear
-      const warnings = validationErrors.length > 0 ? validationErrors : undefined;
+      const warnings =
+        validationErrors.length > 0 ? validationErrors : undefined;
 
       if (!schedule) {
         const course = await prisma.course.findUnique({
@@ -342,7 +352,7 @@ export async function saveSchedule(data: {
           block.subject,
           block.color
         );
-        
+
         // Usar teacherId si está disponible, sino buscar por nombre (legacy)
         let blockTeacherId = "";
         if (block.teacherId) {
@@ -351,7 +361,9 @@ export async function saveSchedule(data: {
           if (teacherExists) {
             blockTeacherId = block.teacherId;
           } else {
-            console.warn(`[saveSchedule] Profesor con ID ${block.teacherId} no encontrado`);
+            console.warn(
+              `[saveSchedule] Profesor con ID ${block.teacherId} no encontrado`
+            );
           }
         }
 
@@ -374,10 +386,10 @@ export async function saveSchedule(data: {
       }
 
       revalidatePath("/schedules");
-      return { 
-        success: true, 
+      return {
+        success: true,
         scheduleId: schedule.id,
-        warnings: warnings // Incluir warnings si existen
+        warnings: warnings, // Incluir warnings si existen
       };
     }
 
@@ -392,12 +404,12 @@ export async function saveSchedule(data: {
       for (const block of blocks) {
         // Usar courseId si está disponible
         let blockCourseId = block.courseId;
-        
+
         // Si no hay courseId pero hay nombre de curso, buscar/crear (legacy)
         if (!blockCourseId && block.course) {
           blockCourseId = await findOrCreateCourse(schoolId, block.course);
         }
-        
+
         if (!blockCourseId) continue;
 
         const subject = await findOrCreateSubject(
@@ -578,7 +590,7 @@ export async function generateAndSaveSchedule(
 
   // Guardar usando la función existente
   console.log("[generateAndSaveSchedule] Guardando bloques generados...");
-  
+
   try {
     await saveSchedule({
       entityId: config.courseId,

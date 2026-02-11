@@ -1,14 +1,14 @@
 /**
  * 🏫 Componente SchoolList - Sistema de Horarios
- * 
+ *
  * Lista de escuelas con búsqueda y filtros
  */
 
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { School } from '@/types';
-import { SchoolCard } from './SchoolCard';
+import { useState } from "react";
+import { School } from "@/types";
+import { SchoolCard } from "./SchoolCard";
 
 export interface SchoolListProps {
   schools: School[];
@@ -18,18 +18,25 @@ export interface SchoolListProps {
   onConfigSchedule?: (school: School) => void;
 }
 
-export function SchoolList({ schools, onEdit, onDelete, onView, onConfigSchedule }: SchoolListProps) {
-  const [search, setSearch] = useState('');
+export function SchoolList({
+  schools,
+  onEdit,
+  onDelete,
+  onView,
+  onConfigSchedule,
+}: SchoolListProps) {
+  const [search, setSearch] = useState("");
 
-  const filteredSchools = schools.filter(school =>
-    school.name.toLowerCase().includes(search.toLowerCase()) ||
-    school.address.toLowerCase().includes(search.toLowerCase())
+  const filteredSchools = schools.filter(
+    (school) =>
+      school.name.toLowerCase().includes(search.toLowerCase()) ||
+      school.address.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <div>
       {/* Búsqueda */}
-      <div className="schools-search" style={{ position: 'relative' }}>
+      <div className="schools-search" style={{ position: "relative" }}>
         <span className="schools-search-icon">🔍</span>
         <input
           type="search"
@@ -45,7 +52,9 @@ export function SchoolList({ schools, onEdit, onDelete, onView, onConfigSchedule
         <div className="schools-empty">
           <div className="schools-empty-icon">🏫</div>
           <p className="schools-empty-title">
-            {search ? 'No se encontraron colegios' : 'No hay colegios registrados'}
+            {search
+              ? "No se encontraron colegios"
+              : "No hay colegios registrados"}
           </p>
           {!search && (
             <p className="schools-empty-subtitle">

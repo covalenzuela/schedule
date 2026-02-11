@@ -48,6 +48,29 @@
   min-width: 120px;
 }
 
+/* Override global input/select styles */
+.school-form input,
+.school-form select {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.school-form input::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.school-form input:focus,
+.school-form select:focus {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: var(--primary-400) !important;
+}
+
+.school-form select option {
+  background: #1e1e2d !important;
+  color: #fff !important;
+}
+
 /* Responsive */
 @media (max-width: 480px) {
   .form-actions {

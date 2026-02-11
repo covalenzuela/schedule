@@ -1,12 +1,12 @@
 /**
  * 🏫 Componente SchoolCard - Sistema de Horarios
- * 
+ *
  * Tarjeta para mostrar información de una escuela
  */
 
-'use client';
+"use client";
 
-import { School } from '@/types';
+import { School } from "@/types";
 
 export interface SchoolCardProps {
   school: School;
@@ -16,20 +16,22 @@ export interface SchoolCardProps {
   onConfigSchedule?: (school: School) => void;
 }
 
-export function SchoolCard({ school, onEdit, onDelete, onView, onConfigSchedule }: SchoolCardProps) {
+export function SchoolCard({
+  school,
+  onEdit,
+  onDelete,
+  onView,
+  onConfigSchedule,
+}: SchoolCardProps) {
   return (
     <div className="schools-card">
       <div className="schools-card-header">
         <div>
-          <h3 className="schools-card-title">
-            {school.name}
-          </h3>
+          <h3 className="schools-card-title">{school.name}</h3>
         </div>
-        <span className="schools-card-badge">
-          Activo
-        </span>
+        <span className="schools-card-badge">Activo</span>
       </div>
-      
+
       <div className="schools-card-info">
         <div className="schools-card-info-item">
           <span className="schools-card-info-icon">📍</span>
@@ -48,7 +50,7 @@ export function SchoolCard({ school, onEdit, onDelete, onView, onConfigSchedule 
           </div>
         )}
       </div>
-      
+
       <div className="schools-card-footer">
         {onConfigSchedule && (
           <button

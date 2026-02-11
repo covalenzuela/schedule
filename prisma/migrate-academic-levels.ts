@@ -3,10 +3,10 @@
  * Y actualizar cursos con academicLevel
  */
 
-import { prisma } from '../src/lib/prisma';
+import { prisma } from "../src/lib/prisma";
 
 async function main() {
-  console.log('🚀 Iniciando migración de datos...\n');
+  console.log("🚀 Iniciando migración de datos...\n");
 
   // 1. Obtener todas las escuelas
   const schools = await prisma.school.findMany();
@@ -21,19 +21,19 @@ async function main() {
       where: {
         schoolId_academicLevel: {
           schoolId: school.id,
-          academicLevel: 'BASIC',
+          academicLevel: "BASIC",
         },
       },
       create: {
         schoolId: school.id,
-        academicLevel: 'BASIC',
-        startTime: '08:00',
-        endTime: '17:00',
+        academicLevel: "BASIC",
+        startTime: "08:00",
+        endTime: "17:00",
         blockDuration: 45,
         breaks: JSON.stringify([
-          { afterBlock: 2, duration: 15, name: 'Recreo' },
-          { afterBlock: 4, duration: 15, name: 'Recreo' },
-          { afterBlock: 6, duration: 45, name: 'Almuerzo' },
+          { afterBlock: 2, duration: 15, name: "Recreo" },
+          { afterBlock: 4, duration: 15, name: "Recreo" },
+          { afterBlock: 6, duration: 45, name: "Almuerzo" },
         ]),
       },
       update: {},
@@ -45,19 +45,19 @@ async function main() {
       where: {
         schoolId_academicLevel: {
           schoolId: school.id,
-          academicLevel: 'MIDDLE',
+          academicLevel: "MIDDLE",
         },
       },
       create: {
         schoolId: school.id,
-        academicLevel: 'MIDDLE',
-        startTime: '08:00',
-        endTime: '18:00',
+        academicLevel: "MIDDLE",
+        startTime: "08:00",
+        endTime: "18:00",
         blockDuration: 90,
         breaks: JSON.stringify([
-          { afterBlock: 2, duration: 15, name: 'Recreo' },
-          { afterBlock: 4, duration: 45, name: 'Almuerzo' },
-          { afterBlock: 6, duration: 15, name: 'Recreo' },
+          { afterBlock: 2, duration: 15, name: "Recreo" },
+          { afterBlock: 4, duration: 45, name: "Almuerzo" },
+          { afterBlock: 6, duration: 15, name: "Recreo" },
         ]),
       },
       update: {},
@@ -66,22 +66,22 @@ async function main() {
   }
 
   // 3. Actualizar cursos existentes con academicLevel
-  console.log('📝 Actualizando cursos con academicLevel...\n');
+  console.log("📝 Actualizando cursos con academicLevel...\n");
 
   const courses = await prisma.course.findMany();
-  
+
   for (const course of courses) {
     // Determinar nivel según el nombre o grado
-    let academicLevel = 'BASIC';
-    
+    let academicLevel = "BASIC";
+
     // Si el curso menciona "Medio" o "III" o "IV" -> MIDDLE
     if (
-      course.name.toLowerCase().includes('medio') ||
-      course.name.toLowerCase().includes('iii') ||
-      course.name.toLowerCase().includes('iv') ||
-      ['9', '10', '11', '12'].includes(course.grade)
+      course.name.toLowerCase().includes("medio") ||
+      course.name.toLowerCase().includes("iii") ||
+      course.name.toLowerCase().includes("iv") ||
+      ["9", "10", "11", "12"].includes(course.grade)
     ) {
-      academicLevel = 'MIDDLE';
+      academicLevel = "MIDDLE";
     }
 
     await prisma.course.update({
@@ -98,8 +98,7 @@ async function main() {
   console.log(`   - ${courses.length} cursos actualizados`);
 }
 
-main()
-  .catch((e) => {
-    console.error('❌ Error en la migración:', e);
-    process.exit(1);
-  });
+main().catch((e) => {
+  console.error("❌ Error en la migración:", e);
+  process.exit(1);
+});

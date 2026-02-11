@@ -1,6 +1,6 @@
 /**
  * 🔄 Script de migración segura de SQLite a PostgreSQL
- * 
+ *
  * Este script:
  * 1. Exporta datos de SQLite (si existen)
  * 2. Aplica migraciones en PostgreSQL
@@ -8,17 +8,17 @@
  * 4. Verifica que todo funcione
  */
 
-import { PrismaClient } from '@prisma/client';
-import { execSync } from 'child_process';
-import fs from 'fs';
-import path from 'path';
+import { PrismaClient } from "@prisma/client";
+import { execSync } from "child_process";
+import fs from "fs";
+import path from "path";
 
 const colors = {
-  reset: '\x1b[0m',
-  green: '\x1b[32m',
-  blue: '\x1b[34m',
-  yellow: '\x1b[33m',
-  red: '\x1b[31m',
+  reset: "\x1b[0m",
+  green: "\x1b[32m",
+  blue: "\x1b[34m",
+  yellow: "\x1b[33m",
+  red: "\x1b[31m",
 };
 
 function log(message, color = colors.reset) {
@@ -28,8 +28,8 @@ function log(message, color = colors.reset) {
 function exec(command, description) {
   log(`\n${description}`, colors.blue);
   try {
-    execSync(command, { stdio: 'inherit' });
-    log('✅ Completado', colors.green);
+    execSync(command, { stdio: "inherit" });
+    log("✅ Completado", colors.green);
     return true;
   } catch (error) {
     log(`❌ Error: ${error.message}`, colors.red);
@@ -39,25 +39,32 @@ function exec(command, description) {
 
 async function exportDataFromSQLite() {
   try {
-    log('\n📦 Paso 1: Exportando datos de SQLite...', colors.blue);
-    
+    log("\n📦 Paso 1: Exportando datos de SQLite...", colors.blue);
+
     // Verificar si existe la base de datos SQLite
-    const sqliteDbPath = path.join(process.cwd(), 'prisma', 'dev.db');
+    const sqliteDbPath = path.join(process.cwd(), "prisma", "dev.db");
     if (!fs.existsSync(sqliteDbPath)) {
-      log('⚠️  No se encontró base de datos SQLite. Continuando sin datos...', colors.yellow);
+      log(
+        "⚠️  No se encontró base de datos SQLite. Continuando sin datos...",
+        colors.yellow
+      );
       return null;
     }
 
     // Cambiar temporalmente a SQLite para exportar
-    process.env.DATABASE_URL = 'file:./prisma/dev.db';
-    
+    process.env.DATABASE_URL = "file:./prisma/dev.db";
+
     const prisma = new PrismaClient();
-    
+
     const data = {
       users: await prisma.user.findMany({ include: { schools: true } }),
       schools: await prisma.school.findMany(),
-      teachers: await prisma.teacher.findMany({ include: { availability: true, teacherSubjects: true } }),
-      subjects: await prisma.subject.findMany({ include: { teacherSubjects: true } }),
+      teachers: await prisma.teacher.findMany({
+        include: { availability: true, teacherSubjects: true },
+      }),
+      subjects: await prisma.subject.findMany({
+        include: { teacherSubjects: true },
+      }),
       courses: await prisma.course.findMany(),
       schedules: await prisma.schedule.findMany({ include: { blocks: true } }),
     };
@@ -65,9 +72,9 @@ async function exportDataFromSQLite() {
     await prisma.$disconnect();
 
     // Guardar datos en archivo JSON
-    const backupPath = path.join(process.cwd(), 'backup-data.json');
+    const backupPath = path.join(process.cwd(), "backup-data.json");
     fs.writeFileSync(backupPath, JSON.stringify(data, null, 2));
-    
+
     log(`✅ Datos exportados a: ${backupPath}`, colors.green);
     log(`   - ${data.users.length} usuarios`, colors.green);
     log(`   - ${data.schools.length} colegios`, colors.green);
@@ -75,30 +82,30 @@ async function exportDataFromSQLite() {
     log(`   - ${data.subjects.length} asignaturas`, colors.green);
     log(`   - ${data.courses.length} cursos`, colors.green);
     log(`   - ${data.schedules.length} horarios`, colors.green);
-    
+
     return data;
   } catch (error) {
     log(`⚠️  Error exportando datos: ${error.message}`, colors.yellow);
-    log('   Continuando sin importar datos...', colors.yellow);
+    log("   Continuando sin importar datos...", colors.yellow);
     return null;
   }
 }
 
 async function importDataToPostgres(data) {
   if (!data) {
-    log('\n⏭️  No hay datos para importar', colors.yellow);
+    log("\n⏭️  No hay datos para importar", colors.yellow);
     return;
   }
 
   try {
-    log('\n📥 Paso 4: Importando datos a PostgreSQL...', colors.blue);
-    
+    log("\n📥 Paso 4: Importando datos a PostgreSQL...", colors.blue);
+
     const prisma = new PrismaClient();
 
     // Importar en orden correcto (respetando relaciones)
-    
+
     // 1. Users
-    log('   Importando usuarios...', colors.blue);
+    log("   Importando usuarios...", colors.blue);
     for (const user of data.users) {
       const { schools, sessions, ...userData } = user;
       await prisma.user.upsert({
@@ -109,9 +116,10 @@ async function importDataToPostgres(data) {
     }
 
     // 2. Schools
-    log('   Importando colegios...', colors.blue);
+    log("   Importando colegios...", colors.blue);
     for (const school of data.schools) {
-      const { users, teachers, subjects, courses, schedules, ...schoolData } = school;
+      const { users, teachers, subjects, courses, schedules, ...schoolData } =
+        school;
       await prisma.school.upsert({
         where: { id: school.id },
         create: schoolData,
@@ -120,7 +128,7 @@ async function importDataToPostgres(data) {
     }
 
     // 3. UserSchool relations
-    log('   Importando relaciones usuario-colegio...', colors.blue);
+    log("   Importando relaciones usuario-colegio...", colors.blue);
     for (const user of data.users) {
       for (const userSchool of user.schools) {
         await prisma.userSchool.upsert({
@@ -132,9 +140,10 @@ async function importDataToPostgres(data) {
     }
 
     // 4. Teachers
-    log('   Importando profesores...', colors.blue);
+    log("   Importando profesores...", colors.blue);
     for (const teacher of data.teachers) {
-      const { availability, teacherSubjects, scheduleBlocks, ...teacherData } = teacher;
+      const { availability, teacherSubjects, scheduleBlocks, ...teacherData } =
+        teacher;
       await prisma.teacher.upsert({
         where: { id: teacher.id },
         create: teacherData,
@@ -143,7 +152,7 @@ async function importDataToPostgres(data) {
     }
 
     // 5. Teacher Availability
-    log('   Importando disponibilidad de profesores...', colors.blue);
+    log("   Importando disponibilidad de profesores...", colors.blue);
     for (const teacher of data.teachers) {
       for (const avail of teacher.availability) {
         await prisma.teacherAvailability.upsert({
@@ -155,7 +164,7 @@ async function importDataToPostgres(data) {
     }
 
     // 6. Subjects
-    log('   Importando asignaturas...', colors.blue);
+    log("   Importando asignaturas...", colors.blue);
     for (const subject of data.subjects) {
       const { teacherSubjects, scheduleBlocks, ...subjectData } = subject;
       await prisma.subject.upsert({
@@ -166,7 +175,7 @@ async function importDataToPostgres(data) {
     }
 
     // 7. TeacherSubjects
-    log('   Importando relaciones profesor-asignatura...', colors.blue);
+    log("   Importando relaciones profesor-asignatura...", colors.blue);
     for (const subject of data.subjects) {
       for (const ts of subject.teacherSubjects) {
         await prisma.teacherSubject.upsert({
@@ -178,7 +187,7 @@ async function importDataToPostgres(data) {
     }
 
     // 8. Courses
-    log('   Importando cursos...', colors.blue);
+    log("   Importando cursos...", colors.blue);
     for (const course of data.courses) {
       const { schedules, scheduleBlocks, ...courseData } = course;
       await prisma.course.upsert({
@@ -189,7 +198,7 @@ async function importDataToPostgres(data) {
     }
 
     // 9. Schedules
-    log('   Importando horarios...', colors.blue);
+    log("   Importando horarios...", colors.blue);
     for (const schedule of data.schedules) {
       const { blocks, ...scheduleData } = schedule;
       await prisma.schedule.upsert({
@@ -200,7 +209,7 @@ async function importDataToPostgres(data) {
     }
 
     // 10. Schedule Blocks
-    log('   Importando bloques de horario...', colors.blue);
+    log("   Importando bloques de horario...", colors.blue);
     for (const schedule of data.schedules) {
       for (const block of schedule.blocks) {
         await prisma.scheduleBlock.upsert({
@@ -212,8 +221,8 @@ async function importDataToPostgres(data) {
     }
 
     await prisma.$disconnect();
-    
-    log('\n✅ Datos importados exitosamente!', colors.green);
+
+    log("\n✅ Datos importados exitosamente!", colors.green);
   } catch (error) {
     log(`\n❌ Error importando datos: ${error.message}`, colors.red);
     throw error;
@@ -221,25 +230,27 @@ async function importDataToPostgres(data) {
 }
 
 async function main() {
-  log('🎯 Iniciando migración segura de SQLite a PostgreSQL...', colors.blue);
-  
+  log("🎯 Iniciando migración segura de SQLite a PostgreSQL...", colors.blue);
+
   try {
     // Paso 1: Exportar datos de SQLite
     const exportedData = await exportDataFromSQLite();
 
     // Paso 2: Generar cliente de Prisma
-    if (!exec('npx prisma generate', '📦 Paso 2: Generando cliente de Prisma...')) {
+    if (
+      !exec("npx prisma generate", "📦 Paso 2: Generando cliente de Prisma...")
+    ) {
       process.exit(1);
     }
 
     // Paso 3: Aplicar migraciones en PostgreSQL
-    log('\n🔄 Paso 3: Aplicando migraciones en PostgreSQL...', colors.blue);
-    log('⚠️  Esto creará las tablas en PostgreSQL', colors.yellow);
-    
-    if (!exec('npx prisma migrate deploy', '   Ejecutando migraciones...')) {
+    log("\n🔄 Paso 3: Aplicando migraciones en PostgreSQL...", colors.blue);
+    log("⚠️  Esto creará las tablas en PostgreSQL", colors.yellow);
+
+    if (!exec("npx prisma migrate deploy", "   Ejecutando migraciones...")) {
       // Si no hay migraciones, hacer push
-      log('   No hay migraciones, usando db push...', colors.yellow);
-      if (!exec('npx prisma db push', '   Aplicando schema...')) {
+      log("   No hay migraciones, usando db push...", colors.yellow);
+      if (!exec("npx prisma db push", "   Aplicando schema...")) {
         process.exit(1);
       }
     }
@@ -250,18 +261,17 @@ async function main() {
     }
 
     // Paso 5: Verificar
-    exec('npx prisma migrate status', '\n🔍 Paso 5: Verificando estado...');
+    exec("npx prisma migrate status", "\n🔍 Paso 5: Verificando estado...");
 
-    log('\n🎉 ¡Migración completada exitosamente!', colors.green);
-    log('\nPróximos pasos:', colors.blue);
-    log('  1. Ejecuta: npm run dev');
-    log('  2. Verifica que todo funcione correctamente');
-    log('  3. Si todo está OK, puedes eliminar prisma/dev.db');
-    log('  4. El backup está en: backup-data.json');
-
+    log("\n🎉 ¡Migración completada exitosamente!", colors.green);
+    log("\nPróximos pasos:", colors.blue);
+    log("  1. Ejecuta: npm run dev");
+    log("  2. Verifica que todo funcione correctamente");
+    log("  3. Si todo está OK, puedes eliminar prisma/dev.db");
+    log("  4. El backup está en: backup-data.json");
   } catch (error) {
     log(`\n❌ Error en la migración: ${error.message}`, colors.red);
-    log('\n⚠️  La base de datos SQLite no fue modificada', colors.yellow);
+    log("\n⚠️  La base de datos SQLite no fue modificada", colors.yellow);
     process.exit(1);
   }
 }

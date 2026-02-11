@@ -1,16 +1,16 @@
 /**
  * 🏫 CreateSchoolForm - Formulario para crear un nuevo colegio
- * 
+ *
  * Este componente se usa dentro de un modal
  */
 
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useModal } from '@/contexts/ModalContext';
-import { createSchool } from '@/modules/schools/actions';
-import { Input } from '@/components/ui';
-import './SchoolForms.css';
+import { useState } from "react";
+import { useModal } from "@/contexts/ModalContext";
+import { createSchool } from "@/modules/schools/actions";
+import { Input } from "@/components/ui";
+import "./SchoolForms.css";
 
 interface CreateSchoolFormProps {
   onSchoolCreated?: () => void;
@@ -19,19 +19,19 @@ interface CreateSchoolFormProps {
 export function CreateSchoolForm({ onSchoolCreated }: CreateSchoolFormProps) {
   const { closeModal } = useModal();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
     const data = {
-      name: formData.get('name') as string,
-      address: formData.get('address') as string,
-      phone: formData.get('phone') as string || undefined,
-      email: formData.get('email') as string || undefined,
+      name: formData.get("name") as string,
+      address: formData.get("address") as string,
+      phone: (formData.get("phone") as string) || undefined,
+      email: (formData.get("email") as string) || undefined,
     };
 
     try {
@@ -42,7 +42,9 @@ export function CreateSchoolForm({ onSchoolCreated }: CreateSchoolFormProps) {
         onSchoolCreated();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al crear el colegio');
+      setError(
+        err instanceof Error ? err.message : "Error al crear el colegio"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -50,11 +52,7 @@ export function CreateSchoolForm({ onSchoolCreated }: CreateSchoolFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="school-form">
-      {error && (
-        <div className="form-error">
-          {error}
-        </div>
-      )}
+      {error && <div className="form-error">{error}</div>}
 
       <div className="form-group">
         <label htmlFor="name" className="form-label">
@@ -124,7 +122,7 @@ export function CreateSchoolForm({ onSchoolCreated }: CreateSchoolFormProps) {
           className="auth-button auth-button-primary"
           disabled={isLoading}
         >
-          {isLoading ? 'Creando...' : 'Crear Colegio'}
+          {isLoading ? "Creando..." : "Crear Colegio"}
         </button>
       </div>
     </form>

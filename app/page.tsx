@@ -68,23 +68,6 @@ export default function LandingPage() {
                 🚀 Comenzar Ahora
               </Button>
             </Link>
-            <Link href="#demo">
-              <Button
-                variant="outline"
-                size="lg"
-                className="landing-hero-btn-secondary"
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                </svg>
-                Ver Demo
-              </Button>
-            </Link>
           </div>
 
           <p className="landing-hero-footer">✨ Sin tarjeta</p>

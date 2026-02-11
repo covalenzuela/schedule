@@ -6,8 +6,12 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { saveSchedule, getSchedulesForCourse, getSchedulesForTeacher } from "@/modules/schedules/actions";
-import { getScheduleConfigForCourse } from "@/modules/schools/actions/schedule-config";
+import {
+  saveSchedule,
+  getSchedulesForCourse,
+  getSchedulesForTeacher,
+} from "@/modules/schedules/actions";
+import { getScheduleConfigForEntity } from "@/modules/schools/actions/schedule-config-util";
 import { getSubjects } from "@/modules/subjects/actions";
 import { getTeachers } from "@/modules/teachers/actions";
 import { checkTeacherAvailabilityDebug } from "@/modules/teachers/actions/availability-debug";
@@ -50,8 +54,16 @@ const DAYS = [
 ];
 
 const PREDEFINED_COLORS = [
-  "#B4D7FF", "#FFB4D7", "#FFFBB4", "#FFD7B4", "#D7B4FF",
-  "#B4FFD7", "#FFB4E5", "#B4FFEB", "#FFC4E7", "#B4EAFF",
+  "#B4D7FF",
+  "#FFB4D7",
+  "#FFFBB4",
+  "#FFD7B4",
+  "#D7B4FF",
+  "#B4FFD7",
+  "#FFB4E5",
+  "#B4FFEB",
+  "#FFC4E7",
+  "#B4EAFF",
 ];
 
 export function ScheduleEditor({
@@ -65,7 +77,9 @@ export function ScheduleEditor({
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const saveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const lastSavedBlocksRef = useRef<string>("");
-  const [selectedBlock, setSelectedBlock] = useState<ScheduleBlock | null>(null);
+  const [selectedBlock, setSelectedBlock] = useState<ScheduleBlock | null>(
+    null
+  );
   const [isAddingBlock, setIsAddingBlock] = useState(false);
 
   // Datos del sistema
@@ -75,26 +89,50 @@ export function ScheduleEditor({
   const [loadingData, setLoadingData] = useState(true);
 
   // Configuración de horario
-  const [scheduleConfig, setScheduleConfig] = useState<ScheduleLevelConfig | null>(null);
+  const [scheduleConfig, setScheduleConfig] =
+    useState<ScheduleLevelConfig | null>(null);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
 
   // Drag and drop
   const [draggedSubject, setDraggedSubject] = useState<any>(null);
-  const [dropTarget, setDropTarget] = useState<{ day: string; time: string } | null>(null);
+  const [dropTarget, setDropTarget] = useState<{
+    day: string;
+    time: string;
+  } | null>(null);
   const [showQuickAssign, setShowQuickAssign] = useState(false);
   const [pendingBlock, setPendingBlock] = useState<any>(null);
 
-  // Nuevo bloque
-  const [newBlock, setNewBlock] = useState({
-    day: "MONDAY",
-    startTime: "08:00",
-    endTime: "08:45",
-    subject: "",
-    subjectId: "",
-    detail: "",
-    detailId: "",
-    color: PREDEFINED_COLORS[0],
-  });
+  // Nuevo bloque (se inicializa al abrir el modal)
+  const getInitialBlock = () => {
+    const firstSlot = timeSlots.find((s) => s.type === "block");
+    return {
+      day: "MONDAY",
+      startTime: firstSlot ? firstSlot.time : "",
+      endTime: firstSlot ? firstSlot.endTime : "",
+      subject: "",
+      subjectId: "",
+      detail: "",
+      detailId: "",
+      color: PREDEFINED_COLORS[0],
+    };
+  };
+  const [newBlock, setNewBlock] = useState(getInitialBlock());
+
+  // Al abrir el modal, inicializar newBlock con el primer bloque real de la jornada
+  const handleOpenAddBlock = () => {
+    setNewBlock(getInitialBlock());
+    setIsAddingBlock(true);
+  };
+
+  // Sincronizar newBlock con el primer bloque real de la jornada cuando cambian los timeSlots
+  useEffect(() => {
+    const firstSlot = timeSlots.find((s) => s.type === "block");
+    setNewBlock((prev) => ({
+      ...prev,
+      startTime: firstSlot ? firstSlot.time : "",
+      endTime: firstSlot ? firstSlot.endTime : "",
+    }));
+  }, [timeSlots.length > 0 && timeSlots[0].time]);
 
   // ============================================
   // CARGA INICIAL DE DATOS
@@ -103,30 +141,30 @@ export function ScheduleEditor({
     const loadData = async () => {
       try {
         setLoadingData(true);
-        
+
         // Cargar datos en paralelo
         const [subjectsData, teachersData, coursesData] = await Promise.all([
           getSubjects(),
           getTeachers(),
           getCourses(),
         ]);
-        
+
         setSubjects(subjectsData);
         setTeachers(teachersData);
         setCourses(coursesData);
 
-        // Cargar configuración del nivel académico
-        const config = await getScheduleConfigForCourse(entityId);
-        console.log('[Editor] ⚙️ Configuración cargada:', config);
-        
+        // Cargar configuración de jornada centralizada
+        const config = await getScheduleConfigForEntity(entityType, entityId);
+        console.log("[Editor] ⚙️ Configuración cargada:", config);
+
         const slots = generateTimeSlotsWithBreaks(config);
-        console.log('[Editor] 🕐 TimeSlots generados:', slots.length, 'slots');
-        
+        console.log("[Editor] 🕐 TimeSlots generados:", slots.length, "slots");
+
         setScheduleConfig(config);
         setTimeSlots(slots);
 
         // Cargar bloques existentes
-        if (entityType === 'course') {
+        if (entityType === "course") {
           const schedules = await getSchedulesForCourse(entityId);
           if (schedules.length > 0) {
             const schedule = schedules[0];
@@ -136,7 +174,9 @@ export function ScheduleEditor({
               startTime: block.startTime,
               endTime: block.endTime,
               subject: block.subject.name,
-              teacher: block.teacher ? `${block.teacher.firstName} ${block.teacher.lastName}` : '',
+              teacher: block.teacher
+                ? `${block.teacher.firstName} ${block.teacher.lastName}`
+                : "",
               teacherId: block.teacher?.id,
               color: block.subject.color || PREDEFINED_COLORS[0],
             }));
@@ -151,7 +191,7 @@ export function ScheduleEditor({
             startTime: block.startTime,
             endTime: block.endTime,
             subject: block.subject.name,
-            course: block.course?.name || '',
+            course: block.course?.name || "",
             courseId: block.course?.id,
             teacherId: block.teacherId,
             color: block.subject.color || PREDEFINED_COLORS[0],
@@ -180,32 +220,36 @@ export function ScheduleEditor({
           entityType,
           blocks: blocksToSave,
         });
-        
+
         // Marcar bloques con conflictos
         if (result.warnings && result.warnings.length > 0) {
           console.warn("⚠️ Advertencias al guardar:", result.warnings);
-          
+
           // Parsear warnings para identificar bloques con conflicto
           const conflictBlocks = new Set<string>();
           result.warnings.forEach((warning: string) => {
             // Formato: "Teacher (Subject, DAY HH:MM-HH:MM): ..."
-            const match = warning.match(/\(([^,]+),\s+(\w+)\s+(\d{2}:\d{2})-(\d{2}:\d{2})\)/);
+            const match = warning.match(
+              /\(([^,]+),\s+(\w+)\s+(\d{2}:\d{2})-(\d{2}:\d{2})\)/
+            );
             if (match) {
               const [, subject, day, startTime] = match;
               conflictBlocks.add(`${day}-${startTime}-${subject.trim()}`);
             }
           });
-          
+
           // Marcar bloques con conflicto en el estado
-          setBlocks(prev => prev.map(block => {
-            const key = `${block.day}-${block.startTime}-${block.subject}`;
-            return {
-              ...block,
-              hasConflict: conflictBlocks.has(key) ? true : block.hasConflict
-            };
-          }));
+          setBlocks((prev) =>
+            prev.map((block) => {
+              const key = `${block.day}-${block.startTime}-${block.subject}`;
+              return {
+                ...block,
+                hasConflict: conflictBlocks.has(key) ? true : block.hasConflict,
+              };
+            })
+          );
         }
-        
+
         lastSavedBlocksRef.current = JSON.stringify(blocksToSave);
         setSaveStatus("saved");
         setTimeout(() => setSaveStatus("idle"), 2000);
@@ -241,8 +285,11 @@ export function ScheduleEditor({
   // VALIDACIÓN DE DISPONIBILIDAD (OPTIMIZADA)
   // ============================================
   // Signature para detectar cambios relevantes sin causar re-renders
-  const blockSignature = useMemo(() => 
-    blocks.map(b => `${b.id}:${b.teacherId || 'none'}:${b.day}:${b.startTime}`).join('|'),
+  const blockSignature = useMemo(
+    () =>
+      blocks
+        .map((b) => `${b.id}:${b.teacherId || "none"}:${b.day}:${b.startTime}`)
+        .join("|"),
     [blocks]
   );
 
@@ -250,13 +297,19 @@ export function ScheduleEditor({
     if (blocks.length === 0) return;
 
     const validateAvailability = async () => {
-      console.log('[Validación] 🔍 Iniciando validación para', blocks.length, 'bloques');
-      
+      console.log(
+        "[Validación] 🔍 Iniciando validación para",
+        blocks.length,
+        "bloques"
+      );
+
       const updatedBlocks = await Promise.all(
         blocks.map(async (block, index) => {
-          const teacherId = entityType === 'course' ? block.teacherId : entityId;
-          const teacherName = entityType === 'course' ? block.teacher : entityName;
-          
+          const teacherId =
+            entityType === "course" ? block.teacherId : entityId;
+          const teacherName =
+            entityType === "course" ? block.teacher : entityName;
+
           if (!teacherId) {
             return { ...block, hasConflict: false };
           }
@@ -270,11 +323,15 @@ export function ScheduleEditor({
 
           // Log solo cuando hay conflicto para reducir ruido
           if (!debugInfo.isAvailable) {
-            console.log(`⚠️ Bloque ${index + 1}: ${block.subject} (${block.day} ${block.startTime})`);
+            console.log(
+              `⚠️ Bloque ${index + 1}: ${block.subject} (${block.day} ${
+                block.startTime
+              })`
+            );
             console.log(`   Profesor: ${teacherName}`);
             console.log(`   Razón: ${debugInfo.reason}`);
           }
-          
+
           return { ...block, hasConflict: !debugInfo.isAvailable };
         })
       );
@@ -284,7 +341,9 @@ export function ScheduleEditor({
       );
 
       if (hasChanges) {
-        console.log('[Validación] ✅ Actualizando bloques con nuevos estados de conflicto');
+        console.log(
+          "[Validación] ✅ Actualizando bloques con nuevos estados de conflicto"
+        );
         setBlocks(updatedBlocks);
       }
     };
@@ -339,8 +398,6 @@ export function ScheduleEditor({
     setShowQuickAssign(true);
   };
 
-
-
   // ============================================
   // MODAL DE AGREGAR BLOQUE
   // ============================================
@@ -371,16 +428,7 @@ export function ScheduleEditor({
 
     setBlocks([...blocks, newBlockData]);
     setIsAddingBlock(false);
-    setNewBlock({
-      day: "MONDAY",
-      startTime: "08:00",
-      endTime: "08:45",
-      subject: "",
-      subjectId: "",
-      detail: "",
-      detailId: "",
-      color: PREDEFINED_COLORS[0],
-    });
+    setNewBlock(getInitialBlock());
   };
 
   // ============================================
@@ -440,10 +488,16 @@ export function ScheduleEditor({
         {/* Toolbar */}
         <div className="schedule-editor-toolbar">
           <button
-            onClick={() => setIsAddingBlock(true)}
+            onClick={handleOpenAddBlock}
             className="schedule-editor-add-btn"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+            >
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
@@ -476,13 +530,18 @@ export function ScheduleEditor({
             <div className="schedule-editor-grid-body">
               {timeSlots.map((slot) => {
                 // RECREO - Fila especial
-                if (slot.type === 'break') {
+                if (slot.type === "break") {
                   return (
-                    <div key={`break-${slot.time}`} className="schedule-editor-grid-row schedule-editor-break-row">
+                    <div
+                      key={`break-${slot.time}`}
+                      className="schedule-editor-grid-row schedule-editor-break-row"
+                    >
                       <div className="schedule-editor-time-cell schedule-editor-break-time">
                         <span className="schedule-editor-break-icon">🌤️</span>
                         <div>
-                          <div className="schedule-editor-break-name">{slot.breakName}</div>
+                          <div className="schedule-editor-break-name">
+                            {slot.breakName}
+                          </div>
                           <div className="schedule-editor-break-duration">
                             {slot.time} - {slot.endTime}
                           </div>
@@ -493,7 +552,9 @@ export function ScheduleEditor({
                           key={`${day.key}-break-${slot.time}`}
                           className="schedule-editor-cell schedule-editor-break-cell"
                         >
-                          <span className="schedule-editor-break-label">{slot.breakName}</span>
+                          <span className="schedule-editor-break-label">
+                            {slot.breakName}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -504,24 +565,36 @@ export function ScheduleEditor({
                 return (
                   <div key={slot.time} className="schedule-editor-grid-row">
                     <div className="schedule-editor-time-cell">
-                      <div className="schedule-editor-block-number">Bloque {slot.blockNumber}</div>
-                      <div className="schedule-editor-block-time">{slot.time} - {slot.endTime}</div>
+                      <div className="schedule-editor-block-number">
+                        Bloque {slot.blockNumber}
+                      </div>
+                      <div className="schedule-editor-block-time">
+                        {slot.time} - {slot.endTime}
+                      </div>
                     </div>
                     {DAYS.map((day) => {
                       const cellBlocks = getBlocksForSlot(day.key, slot.time);
-                      const isDropTarget = dropTarget?.day === day.key && dropTarget?.time === slot.time;
+                      const isDropTarget =
+                        dropTarget?.day === day.key &&
+                        dropTarget?.time === slot.time;
 
                       return (
                         <div
                           key={`${day.key}-${slot.time}`}
-                          className={`schedule-editor-cell ${isDropTarget ? "drop-hover" : ""} ${draggedSubject ? "drop-active" : ""}`}
-                          onDragOver={(e) => handleDragOver(e, day.key, slot.time)}
+                          className={`schedule-editor-cell ${
+                            isDropTarget ? "drop-hover" : ""
+                          } ${draggedSubject ? "drop-active" : ""}`}
+                          onDragOver={(e) =>
+                            handleDragOver(e, day.key, slot.time)
+                          }
                           onDragLeave={handleDragLeave}
-                          onDrop={(e) => handleDrop(e, day.key, slot.time, slot)}
+                          onDrop={(e) =>
+                            handleDrop(e, day.key, slot.time, slot)
+                          }
                           onClick={() => {
                             if (cellBlocks.length === 0) {
                               setNewBlock({
-                                ...newBlock,
+                                ...getInitialBlock(),
                                 day: day.key,
                                 startTime: slot.time,
                                 endTime: slot.endTime,
@@ -533,28 +606,36 @@ export function ScheduleEditor({
                           {cellBlocks.map((block) => {
                             // Mensaje de conflicto (disponibilidad o asignación múltiple)
                             const conflictMessage = block.hasConflict
-                              ? entityType === 'course' 
+                              ? entityType === "course"
                                 ? `⚠️ Conflicto: El profesor ${block.teacher} no está disponible o está en otro curso a esta hora`
                                 : `⚠️ Conflicto: No tienes disponibilidad o estás asignado en otro curso a esta hora`
-                              : '';
-                            
+                              : "";
+
                             return (
                               <div
                                 key={block.id}
-                                className={`schedule-editor-block ${block.hasConflict ? 'has-conflict' : ''}`}
+                                className={`schedule-editor-block ${
+                                  block.hasConflict ? "has-conflict" : ""
+                                }`}
                                 style={{ backgroundColor: block.color }}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setSelectedBlock(block);
                                 }}
-                                title={block.hasConflict ? conflictMessage : ''}
+                                title={block.hasConflict ? conflictMessage : ""}
                               >
                                 {block.hasConflict && (
-                                  <div className="schedule-editor-block-warning">⚠️</div>
+                                  <div className="schedule-editor-block-warning">
+                                    ⚠️
+                                  </div>
                                 )}
-                                <div className="schedule-editor-block-subject">{block.subject}</div>
+                                <div className="schedule-editor-block-subject">
+                                  {block.subject}
+                                </div>
                                 <div className="schedule-editor-block-detail">
-                                  {entityType === "course" ? block.teacher : block.course}
+                                  {entityType === "course"
+                                    ? block.teacher
+                                    : block.course}
                                 </div>
                               </div>
                             );
@@ -614,19 +695,37 @@ export function ScheduleEditor({
 
       {/* Add Block Modal */}
       {isAddingBlock && (
-        <div className="schedule-editor-modal-overlay" onClick={() => setIsAddingBlock(false)}>
-          <div className="schedule-editor-modal" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="schedule-editor-modal-overlay"
+          onClick={() => setIsAddingBlock(false)}
+        >
+          <div
+            className="schedule-editor-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="schedule-editor-modal-header">
               <h3>Agregar Bloque de Clase</h3>
-              <button onClick={() => setIsAddingBlock(false)} className="schedule-editor-modal-close">×</button>
+              <button
+                onClick={() => setIsAddingBlock(false)}
+                className="schedule-editor-modal-close"
+              >
+                ×
+              </button>
             </div>
 
             <div className="schedule-editor-modal-body">
               <div className="schedule-editor-form-group">
                 <label>Día</label>
-                <select value={newBlock.day} onChange={(e) => setNewBlock({ ...newBlock, day: e.target.value })}>
+                <select
+                  value={newBlock.day}
+                  onChange={(e) =>
+                    setNewBlock({ ...newBlock, day: e.target.value })
+                  }
+                >
                   {DAYS.map((day) => (
-                    <option key={day.key} value={day.key}>{day.label}</option>
+                    <option key={day.key} value={day.key}>
+                      {day.label}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -634,18 +733,27 @@ export function ScheduleEditor({
               <div className="schedule-editor-form-row">
                 <div className="schedule-editor-form-group">
                   <label>Inicio</label>
-                  <select value={newBlock.startTime} onChange={(e) => {
-                    const startTime = e.target.value;
-                    const slot = timeSlots.find(s => s.type === 'block' && s.time === startTime);
-                    setNewBlock({ 
-                      ...newBlock, 
-                      startTime, 
-                      endTime: slot?.endTime || newBlock.endTime 
-                    });
-                  }}>
-                    {timeSlots.filter(s => s.type === 'block').map((slot) => (
-                      <option key={slot.time} value={slot.time}>{slot.time}</option>
-                    ))}
+                  <select
+                    value={newBlock.startTime}
+                    onChange={(e) => {
+                      const startTime = e.target.value;
+                      const slot = timeSlots.find(
+                        (s) => s.type === "block" && s.time === startTime
+                      );
+                      setNewBlock({
+                        ...newBlock,
+                        startTime,
+                        endTime: slot?.endTime || newBlock.endTime,
+                      });
+                    }}
+                  >
+                    {timeSlots
+                      .filter((s) => s.type === "block")
+                      .map((slot) => (
+                        <option key={slot.time} value={slot.time}>
+                          {slot.time}
+                        </option>
+                      ))}
                   </select>
                 </div>
 
@@ -657,17 +765,29 @@ export function ScheduleEditor({
 
               <div className="schedule-editor-form-group">
                 <label>Asignatura</label>
-                <select value={newBlock.subjectId} onChange={(e) => setNewBlock({ ...newBlock, subjectId: e.target.value })}>
+                <select
+                  value={newBlock.subjectId}
+                  onChange={(e) =>
+                    setNewBlock({ ...newBlock, subjectId: e.target.value })
+                  }
+                >
                   <option value="">Seleccionar...</option>
                   {subjects.map((subject) => (
-                    <option key={subject.id} value={subject.id}>{subject.name}</option>
+                    <option key={subject.id} value={subject.id}>
+                      {subject.name}
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div className="schedule-editor-form-group">
                 <label>{entityType === "course" ? "Profesor" : "Curso"}</label>
-                <select value={newBlock.detailId} onChange={(e) => setNewBlock({ ...newBlock, detailId: e.target.value })}>
+                <select
+                  value={newBlock.detailId}
+                  onChange={(e) =>
+                    setNewBlock({ ...newBlock, detailId: e.target.value })
+                  }
+                >
                   <option value="">Seleccionar...</option>
                   {entityType === "course"
                     ? teachers.map((teacher) => (
@@ -676,18 +796,23 @@ export function ScheduleEditor({
                         </option>
                       ))
                     : courses.map((course) => (
-                        <option key={course.id} value={course.id}>{course.name}</option>
+                        <option key={course.id} value={course.id}>
+                          {course.name}
+                        </option>
                       ))}
                 </select>
               </div>
             </div>
 
             <div className="schedule-editor-modal-footer">
-              <button onClick={() => setIsAddingBlock(false)} className="schedule-editor-btn-secondary">
+              <button
+                onClick={() => setIsAddingBlock(false)}
+                className="schedule-editor-btn-secondary"
+              >
                 Cancelar
               </button>
-              <button 
-                onClick={handleAddBlock} 
+              <button
+                onClick={handleAddBlock}
                 className="schedule-editor-btn-primary"
                 disabled={!newBlock.subjectId}
               >
@@ -700,23 +825,38 @@ export function ScheduleEditor({
 
       {/* Selected Block Panel */}
       {selectedBlock && (
-        <div className="schedule-editor-panel-overlay" onClick={() => setSelectedBlock(null)}>
-          <div className="schedule-editor-panel" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="schedule-editor-panel-overlay"
+          onClick={() => setSelectedBlock(null)}
+        >
+          <div
+            className="schedule-editor-panel"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="schedule-editor-panel-header">
               <h3>Detalles del Bloque</h3>
-              <button onClick={() => setSelectedBlock(null)} className="schedule-editor-panel-close">×</button>
+              <button
+                onClick={() => setSelectedBlock(null)}
+                className="schedule-editor-panel-close"
+              >
+                ×
+              </button>
             </div>
 
             <div className="schedule-editor-panel-body">
               <div className="schedule-editor-panel-field">
                 <label>Asignatura</label>
-                <div className="schedule-editor-panel-value">{selectedBlock.subject}</div>
+                <div className="schedule-editor-panel-value">
+                  {selectedBlock.subject}
+                </div>
               </div>
 
               <div className="schedule-editor-panel-field">
                 <label>{entityType === "course" ? "Profesor" : "Curso"}</label>
                 <div className="schedule-editor-panel-value">
-                  {entityType === "course" ? selectedBlock.teacher : selectedBlock.course}
+                  {entityType === "course"
+                    ? selectedBlock.teacher
+                    : selectedBlock.course}
                 </div>
               </div>
 
@@ -736,16 +876,17 @@ export function ScheduleEditor({
 
               {selectedBlock.hasConflict && (
                 <div className="schedule-editor-panel-warning">
-                  ⚠️ {entityType === 'course' 
+                  ⚠️{" "}
+                  {entityType === "course"
                     ? `El profesor ${selectedBlock.teacher} no está disponible en este horario`
-                    : 'No tienes disponibilidad marcada en este horario'}
+                    : "No tienes disponibilidad marcada en este horario"}
                 </div>
               )}
             </div>
 
             <div className="schedule-editor-panel-footer">
-              <button 
-                onClick={() => handleDeleteBlock(selectedBlock.id)} 
+              <button
+                onClick={() => handleDeleteBlock(selectedBlock.id)}
                 className="schedule-editor-btn-danger"
               >
                 Eliminar Bloque

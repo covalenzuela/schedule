@@ -440,7 +440,7 @@ body:has(.navbar-menu-mobile.open) {
 
 /* Área invisible para mantener el hover */
 .navbar-dropdown::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 100%;
   left: 0;

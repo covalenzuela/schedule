@@ -5,7 +5,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getSchoolScheduleConfig, updateSchoolScheduleConfig } from "@/modules/schools/actions";
+import {
+  getSchoolScheduleConfig,
+  updateSchoolScheduleConfig,
+} from "@/modules/schools/actions";
 import "@/app/schedule-editor.css";
 
 interface SchoolScheduleConfigProps {
@@ -55,16 +58,18 @@ export function SchoolScheduleConfig({
     try {
       const data = await getSchoolScheduleConfig(schoolId);
       setConfig(data as any);
-      
+
       // Detectar si hay configuración personalizada por día
       if (data.lunchBreakByDay) {
         const days = Object.keys(data.lunchBreakByDay);
         const firstDay = data.lunchBreakByDay[days[0]];
-        const hasCustom = days.some(day => {
+        const hasCustom = days.some((day) => {
           const dayConfig = data.lunchBreakByDay![day];
-          return dayConfig.start !== firstDay.start || 
-                 dayConfig.end !== firstDay.end ||
-                 dayConfig.enabled !== firstDay.enabled;
+          return (
+            dayConfig.start !== firstDay.start ||
+            dayConfig.end !== firstDay.end ||
+            dayConfig.enabled !== firstDay.enabled
+          );
         });
         setUseCustomLunchTimes(hasCustom);
       }
@@ -78,7 +83,7 @@ export function SchoolScheduleConfig({
   const handleSave = async () => {
     try {
       setSaving(true);
-      
+
       // Preparar configuración a guardar
       const configToSave: any = {
         startTime: config.startTime,
@@ -95,7 +100,7 @@ export function SchoolScheduleConfig({
       } else {
         configToSave.lunchBreakByDay = {}; // Limpiar configuración personalizada
       }
-      
+
       await updateSchoolScheduleConfig(schoolId, configToSave);
       alert("Configuración guardada exitosamente");
       onClose();
@@ -128,7 +133,15 @@ export function SchoolScheduleConfig({
         <div className="quick-assign-modal-header">
           <div>
             <h3>⚙️ Configuración de Jornada</h3>
-            <p style={{ margin: "0.25rem 0 0 0", fontSize: "0.875rem", color: "rgba(255, 255, 255, 0.6)" }}>{schoolName}</p>
+            <p
+              style={{
+                margin: "0.25rem 0 0 0",
+                fontSize: "0.875rem",
+                color: "rgba(255, 255, 255, 0.6)",
+              }}
+            >
+              {schoolName}
+            </p>
           </div>
           <button onClick={onClose} className="quick-assign-modal-close">
             ×
@@ -136,14 +149,22 @@ export function SchoolScheduleConfig({
         </div>
 
         <div className="schedule-config-body quick-assign-modal-body">
-          <p style={{ marginBottom: "1.5rem", fontSize: "0.9375rem", color: "rgba(255, 255, 255, 0.7)" }}>
+          <p
+            style={{
+              marginBottom: "1.5rem",
+              fontSize: "0.9375rem",
+              color: "rgba(255, 255, 255, 0.7)",
+            }}
+          >
             Define el horario base que se aplicará a todos los cursos de este
-            colegio. Puedes modificar las horas de inicio y término, la
-            duración de los bloques y recreos.
+            colegio. Puedes modificar las horas de inicio y término, la duración
+            de los bloques y recreos.
           </p>
 
           <div className="schedule-config-section">
-            <h4 className="schedule-config-section-title">Horario de Jornada</h4>
+            <h4 className="schedule-config-section-title">
+              Horario de Jornada
+            </h4>
 
             <div className="schedule-config-row">
               <div className="quick-assign-form-group">
@@ -185,7 +206,9 @@ export function SchoolScheduleConfig({
           </div>
 
           <div className="schedule-config-section">
-            <h4 className="schedule-config-section-title">Duración de Bloques y Recreos</h4>
+            <h4 className="schedule-config-section-title">
+              Duración de Bloques y Recreos
+            </h4>
 
             <div className="schedule-config-row">
               <div className="quick-assign-form-group">
@@ -227,7 +250,9 @@ export function SchoolScheduleConfig({
           </div>
 
           <div className="schedule-config-section">
-            <h4 className="schedule-config-section-title">Recreo de Almuerzo</h4>
+            <h4 className="schedule-config-section-title">
+              Recreo de Almuerzo
+            </h4>
 
             <div className="schedule-config-checkbox">
               <label>
@@ -307,8 +332,18 @@ export function SchoolScheduleConfig({
 
           {/* NUEVA SECCIÓN: Horarios de almuerzo personalizados por día */}
           <div className="schedule-config-section">
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
-              <h4 className="schedule-config-section-title" style={{ margin: 0 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "1rem",
+              }}
+            >
+              <h4
+                className="schedule-config-section-title"
+                style={{ margin: 0 }}
+              >
                 Horarios Personalizados por Día
               </h4>
               <div className="schedule-config-checkbox" style={{ margin: 0 }}>
@@ -319,18 +354,27 @@ export function SchoolScheduleConfig({
                     onChange={(e) => {
                       const checked = e.target.checked;
                       setUseCustomLunchTimes(checked);
-                      
+
                       // Si se activa, inicializar con los valores actuales
                       if (checked) {
                         const newLunchByDay: any = {};
-                        ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'].forEach(day => {
+                        [
+                          "MONDAY",
+                          "TUESDAY",
+                          "WEDNESDAY",
+                          "THURSDAY",
+                          "FRIDAY",
+                        ].forEach((day) => {
                           newLunchByDay[day] = {
                             enabled: config.lunchBreak.enabled,
                             start: config.lunchBreak.startTime,
                             end: config.lunchBreak.endTime,
                           };
                         });
-                        setConfig({ ...config, lunchBreakByDay: newLunchByDay });
+                        setConfig({
+                          ...config,
+                          lunchBreakByDay: newLunchByDay,
+                        });
                       }
                     }}
                   />
@@ -340,43 +384,67 @@ export function SchoolScheduleConfig({
             </div>
 
             {useCustomLunchTimes && (
-              <div style={{ 
-                background: "rgba(255, 255, 255, 0.03)", 
-                border: "1px solid rgba(255, 255, 255, 0.1)", 
-                borderRadius: "0.75rem", 
-                padding: "1rem",
-                marginTop: "1rem"
-              }}>
-                <p style={{ 
-                  fontSize: "0.875rem", 
-                  color: "rgba(255, 255, 255, 0.6)", 
-                  marginBottom: "1rem" 
-                }}>
-                  Configura horarios de almuerzo específicos para cada día de la semana
+              <div
+                style={{
+                  background: "rgba(255, 255, 255, 0.03)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  borderRadius: "0.75rem",
+                  padding: "1rem",
+                  marginTop: "1rem",
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: "0.875rem",
+                    color: "rgba(255, 255, 255, 0.6)",
+                    marginBottom: "1rem",
+                  }}
+                >
+                  Configura horarios de almuerzo específicos para cada día de la
+                  semana
                 </p>
 
-                {(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'] as const).map((day, index) => {
-                  const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+                {(
+                  [
+                    "MONDAY",
+                    "TUESDAY",
+                    "WEDNESDAY",
+                    "THURSDAY",
+                    "FRIDAY",
+                  ] as const
+                ).map((day, index) => {
+                  const dayNames = [
+                    "Lunes",
+                    "Martes",
+                    "Miércoles",
+                    "Jueves",
+                    "Viernes",
+                  ];
                   const dayConfig = config.lunchBreakByDay[day];
 
                   return (
-                    <div 
+                    <div
                       key={day}
                       style={{
                         padding: "1rem",
                         background: "rgba(255, 255, 255, 0.02)",
                         border: "1px solid rgba(255, 255, 255, 0.08)",
                         borderRadius: "0.5rem",
-                        marginBottom: index < 4 ? "0.75rem" : "0"
+                        marginBottom: index < 4 ? "0.75rem" : "0",
                       }}
                     >
-                      <div style={{ 
-                        display: "flex", 
-                        alignItems: "center", 
-                        gap: "1rem",
-                        marginBottom: "0.75rem"
-                      }}>
-                        <div className="schedule-config-checkbox" style={{ margin: 0 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "1rem",
+                          marginBottom: "0.75rem",
+                        }}
+                      >
+                        <div
+                          className="schedule-config-checkbox"
+                          style={{ margin: 0 }}
+                        >
                           <label>
                             <input
                               type="checkbox"
@@ -394,7 +462,9 @@ export function SchoolScheduleConfig({
                                 });
                               }}
                             />
-                            <span style={{ fontWeight: 600 }}>{dayNames[index]}</span>
+                            <span style={{ fontWeight: 600 }}>
+                              {dayNames[index]}
+                            </span>
                           </label>
                         </div>
                       </div>
@@ -402,7 +472,9 @@ export function SchoolScheduleConfig({
                       {dayConfig.enabled && (
                         <div className="schedule-config-row">
                           <div className="quick-assign-form-group">
-                            <label style={{ fontSize: "0.875rem" }}>Inicio</label>
+                            <label style={{ fontSize: "0.875rem" }}>
+                              Inicio
+                            </label>
                             <select
                               value={dayConfig.start}
                               onChange={(e) => {
@@ -468,7 +540,10 @@ export function SchoolScheduleConfig({
           </div>
         </div>
 
-        <div className="quick-assign-modal-footer" style={{ padding: "1.5rem" }}>
+        <div
+          className="quick-assign-modal-footer"
+          style={{ padding: "1.5rem" }}
+        >
           <button
             onClick={onClose}
             className="quick-assign-btn secondary"
