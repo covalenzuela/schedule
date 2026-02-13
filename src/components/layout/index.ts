@@ -4,6 +4,7 @@
 
 export { Navbar } from "./Navbar";
 export type { NavbarProps } from "./Navbar";
+export { SkipToMain } from "./SkipToMain";
 
 export { Sidebar, SidebarSection, SidebarLink } from "./Sidebar";
 export type {

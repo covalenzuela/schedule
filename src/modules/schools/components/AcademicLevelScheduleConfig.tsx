@@ -10,14 +10,15 @@ import {
   saveScheduleConfigForLevel,
 } from "@/modules/schools/actions/schedule-config";
 import {
-  getSchoolScheduleConfig,
-  updateSchoolScheduleConfig,
+  getSchoolActiveAcademicLevels,
 } from "@/modules/schools/actions";
 import type {
   AcademicLevel,
   BreakConfig,
   ScheduleLevelConfig,
 } from "@/types/schedule-config";
+import { parseActiveAcademicLevels } from "@/lib/utils/academic-levels";
+import { ActiveAcademicLevelsConfig } from "./ActiveAcademicLevelsConfig";
 import "@/app/schedule-editor.css";
 
 interface AcademicLevelScheduleConfigProps {
@@ -43,18 +44,6 @@ const ACADEMIC_LEVELS: { key: AcademicLevel; label: string; emoji: string }[] =
 
 type DayOfWeek = "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY";
 
-type LunchBreakByDay = Record<
-  DayOfWeek,
-  { enabled: boolean; start: string; end: string }
->;
-
-const DAYS: DayOfWeek[] = [
-  "MONDAY",
-  "TUESDAY",
-  "WEDNESDAY",
-  "THURSDAY",
-  "FRIDAY",
-];
 
 // Helper para calcular bloques disponibles
 function calculateAvailableBlocks(
@@ -73,7 +62,12 @@ export function AcademicLevelScheduleConfig({
   schoolName,
   onClose,
 }: AcademicLevelScheduleConfigProps) {
+  const [activeTab, setActiveTab] = useState<"config" | AcademicLevel>("config");
   const [activeLevel, setActiveLevel] = useState<AcademicLevel>("BASIC");
+  const [availableLevels, setAvailableLevels] = useState<AcademicLevel[]>([
+    "BASIC",
+    "MIDDLE",
+  ]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -91,24 +85,32 @@ export function AcademicLevelScheduleConfig({
     null
   );
 
-  // Configuración de almuerzo (legacy - se guarda en School)
-  const [lunchBreak, setLunchBreak] = useState({
-    enabled: true,
-    startTime: "13:00",
-    endTime: "14:00",
-  });
-  const [useCustomLunchTimes, setUseCustomLunchTimes] = useState(false);
-  const [lunchBreakByDay, setLunchBreakByDay] = useState<LunchBreakByDay>({
-    MONDAY: { enabled: true, start: "13:00", end: "14:00" },
-    TUESDAY: { enabled: true, start: "13:00", end: "14:00" },
-    WEDNESDAY: { enabled: true, start: "13:00", end: "14:00" },
-    THURSDAY: { enabled: true, start: "13:00", end: "14:00" },
-    FRIDAY: { enabled: true, start: "13:00", end: "14:00" },
-  });
+  // (Legacy state variables removed - no longer needed)
 
   useEffect(() => {
-    loadConfig();
-  }, [schoolId, activeLevel]);
+    loadAvailableLevels();
+  }, [schoolId]);
+
+  useEffect(() => {
+    if (availableLevels.length > 0) {
+      loadConfig();
+    }
+  }, [schoolId, activeLevel, availableLevels]);
+
+  const loadAvailableLevels = async () => {
+    try {
+      const levelsString = await getSchoolActiveAcademicLevels(schoolId);
+      const levels = parseActiveAcademicLevels(levelsString);
+      setAvailableLevels(levels);
+      
+      // Si el nivel activo no está en los disponibles, cambiar al primero disponible
+      if (!levels.includes(activeLevel) && levels.length > 0) {
+        setActiveLevel(levels[0]);
+      }
+    } catch (error) {
+      console.error("Error cargando niveles activos:", error);
+    }
+  };
 
   const loadConfig = async () => {
     try {
@@ -116,55 +118,6 @@ export function AcademicLevelScheduleConfig({
       const data = await getScheduleConfigForLevel(schoolId, activeLevel);
       setConfig(data);
       setOriginalConfig(data); // Guardar configuración original
-
-      // Cargar configuración de almuerzo (legacy)
-      const schoolConfig = await getSchoolScheduleConfig(schoolId);
-      setLunchBreak(schoolConfig.lunchBreak);
-      if (
-        schoolConfig.lunchBreakByDay &&
-        Object.keys(schoolConfig.lunchBreakByDay).length > 0
-      ) {
-        // Merge con valores por defecto para asegurar todas las claves
-        setLunchBreakByDay({
-          MONDAY: schoolConfig.lunchBreakByDay.MONDAY || {
-            enabled: true,
-            start: "13:00",
-            end: "14:00",
-          },
-          TUESDAY: schoolConfig.lunchBreakByDay.TUESDAY || {
-            enabled: true,
-            start: "13:00",
-            end: "14:00",
-          },
-          WEDNESDAY: schoolConfig.lunchBreakByDay.WEDNESDAY || {
-            enabled: true,
-            start: "13:00",
-            end: "14:00",
-          },
-          THURSDAY: schoolConfig.lunchBreakByDay.THURSDAY || {
-            enabled: true,
-            start: "13:00",
-            end: "14:00",
-          },
-          FRIDAY: schoolConfig.lunchBreakByDay.FRIDAY || {
-            enabled: true,
-            start: "13:00",
-            end: "14:00",
-          },
-        });
-
-        const days = Object.keys(schoolConfig.lunchBreakByDay);
-        const firstDay = schoolConfig.lunchBreakByDay[days[0]];
-        const hasCustom = days.some((day) => {
-          const dayConfig = schoolConfig.lunchBreakByDay![day];
-          return (
-            dayConfig.start !== firstDay.start ||
-            dayConfig.end !== firstDay.end ||
-            dayConfig.enabled !== firstDay.enabled
-          );
-        });
-        setUseCustomLunchTimes(hasCustom);
-      }
     } catch (error) {
       console.error("Error cargando configuración:", error);
     } finally {
@@ -235,16 +188,6 @@ export function AcademicLevelScheduleConfig({
         ...config,
       });
 
-      // Guardar configuración de almuerzo (legacy)
-      await updateSchoolScheduleConfig(schoolId, {
-        startTime: config.startTime,
-        endTime: config.endTime,
-        blockDuration: config.blockDuration,
-        breakDuration: 15, // Default
-        lunchBreak: lunchBreak,
-        lunchBreakByDay: useCustomLunchTimes ? lunchBreakByDay : {},
-      });
-
       alert(
         `✅ Configuración guardada para ${
           activeLevel === "BASIC" ? "Básica" : "Media"
@@ -284,14 +227,18 @@ export function AcademicLevelScheduleConfig({
       return;
     }
 
+    // Si no hay breaks, sugerir crear un almuerzo
+    const suggestedName = config.breaks.length === 0 ? "Almuerzo" : "Recreo";
+    const suggestedDuration = config.breaks.length === 0 ? 45 : 15;
+
     setConfig({
       ...config,
       breaks: [
         ...config.breaks,
         {
           afterBlock: nextAfterBlock,
-          duration: 15,
-          name: "Recreo",
+          duration: suggestedDuration,
+          name: suggestedName,
         },
       ],
     });
@@ -337,26 +284,46 @@ export function AcademicLevelScheduleConfig({
               style={{
                 margin: "0.25rem 0 0 0",
                 fontSize: "0.875rem",
-                color: "rgba(255, 255, 255, 0.6)",
+                color: "rgba(255, 255, 255, 0.75)",
               }}
             >
               {schoolName}
             </p>
           </div>
-          <button onClick={onClose} className="quick-assign-modal-close">
+          <button 
+            onClick={onClose} 
+            className="quick-assign-modal-close"
+            aria-label="Cerrar modal de configuración"
+            title="Cerrar"
+          >
             ×
           </button>
         </div>
 
         {/* Tabs for Academic Levels */}
         <div className="academic-level-tabs">
-          {ACADEMIC_LEVELS.map((level) => (
+          <button
+            key="config"
+            className={`academic-level-tab ${
+              activeTab === "config" ? "active" : ""
+            }`}
+            onClick={() => setActiveTab("config")}
+          >
+            <span className="academic-level-tab-emoji">⚙️</span>
+            <span className="academic-level-tab-label">Configuración General</span>
+          </button>
+          {ACADEMIC_LEVELS.filter((level) =>
+            availableLevels.includes(level.key)
+          ).map((level) => (
             <button
               key={level.key}
               className={`academic-level-tab ${
-                activeLevel === level.key ? "active" : ""
+                activeTab === level.key ? "active" : ""
               }`}
-              onClick={() => setActiveLevel(level.key)}
+              onClick={() => {
+                setActiveLevel(level.key);
+                setActiveTab(level.key);
+              }}
             >
               <span className="academic-level-tab-emoji">{level.emoji}</span>
               <span className="academic-level-tab-label">{level.label}</span>
@@ -369,19 +336,26 @@ export function AcademicLevelScheduleConfig({
           className="schedule-config-body quick-assign-modal-body"
           style={{ maxHeight: "60vh", overflowY: "auto" }}
         >
-          <p
-            style={{
-              marginBottom: "1.5rem",
-              fontSize: "0.9375rem",
-              color: "rgba(255, 255, 255, 0.7)",
-            }}
-          >
-            Configura los horarios específicos para{" "}
-            <strong>
-              {activeLevel === "BASIC" ? "Educación Básica" : "Educación Media"}
-            </strong>
-            . Cada nivel puede tener horarios diferentes.
-          </p>
+          {activeTab === "config" ? (
+            <ActiveAcademicLevelsConfig
+              schoolId={schoolId}
+              onUpdate={loadAvailableLevels}
+            />
+          ) : (
+            <>
+              <p
+                style={{
+                  marginBottom: "1.5rem",
+                  fontSize: "0.9375rem",
+                  color: "rgba(255, 255, 255, 0.7)",
+                }}
+              >
+                Configura los horarios específicos para{" "}
+                <strong>
+                  {activeLevel === "BASIC" ? "Educación Básica" : "Educación Media"}
+                </strong>
+                . Cada nivel puede tener horarios diferentes.
+              </p>
 
           {/* Horario General */}
           <div className="schedule-config-section">
@@ -480,233 +454,7 @@ export function AcademicLevelScheduleConfig({
             </div>
           </div>
 
-          {/* Almuerzo */}
-          <div className="schedule-config-section">
-            <h4 className="schedule-config-section-title">
-              🍽️ Horario de Almuerzo
-            </h4>
-
-            <div style={{ marginBottom: "1rem" }}>
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  cursor: "pointer",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={lunchBreak.enabled}
-                  onChange={(e) =>
-                    setLunchBreak({ ...lunchBreak, enabled: e.target.checked })
-                  }
-                />
-                <span style={{ fontSize: "0.9375rem", color: "white" }}>
-                  Habilitar horario de almuerzo
-                </span>
-              </label>
-            </div>
-
-            {lunchBreak.enabled && (
-              <>
-                <div
-                  className="schedule-config-row"
-                  style={{ marginBottom: "1rem" }}
-                >
-                  <div className="quick-assign-form-group">
-                    <label>Hora de Inicio</label>
-                    <select
-                      value={lunchBreak.startTime}
-                      onChange={(e) =>
-                        setLunchBreak({
-                          ...lunchBreak,
-                          startTime: e.target.value,
-                        })
-                      }
-                    >
-                      {TIME_OPTIONS.map((time) => (
-                        <option key={time} value={time}>
-                          {time}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="quick-assign-form-group">
-                    <label>Hora de Término</label>
-                    <select
-                      value={lunchBreak.endTime}
-                      onChange={(e) =>
-                        setLunchBreak({
-                          ...lunchBreak,
-                          endTime: e.target.value,
-                        })
-                      }
-                    >
-                      {TIME_OPTIONS.map((time) => (
-                        <option key={time} value={time}>
-                          {time}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div style={{ marginBottom: "1rem" }}>
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={useCustomLunchTimes}
-                      onChange={(e) => setUseCustomLunchTimes(e.target.checked)}
-                    />
-                    <span
-                      style={{
-                        fontSize: "0.875rem",
-                        color: "rgba(255, 255, 255, 0.8)",
-                      }}
-                    >
-                      Configurar horario diferente por día
-                    </span>
-                  </label>
-                </div>
-
-                {useCustomLunchTimes && (
-                  <div
-                    style={{
-                      background: "rgba(255, 255, 255, 0.03)",
-                      border: "1px solid rgba(255, 255, 255, 0.1)",
-                      borderRadius: "0.75rem",
-                      padding: "1rem",
-                    }}
-                  >
-                    {DAYS.map((day) => {
-                      const dayLabels: Record<DayOfWeek, string> = {
-                        MONDAY: "Lunes",
-                        TUESDAY: "Martes",
-                        WEDNESDAY: "Miércoles",
-                        THURSDAY: "Jueves",
-                        FRIDAY: "Viernes",
-                      };
-
-                      return (
-                        <div key={day} style={{ marginBottom: "1rem" }}>
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "1rem",
-                              marginBottom: "0.5rem",
-                            }}
-                          >
-                            <label
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "0.5rem",
-                                cursor: "pointer",
-                                minWidth: "100px",
-                              }}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={lunchBreakByDay[day]?.enabled ?? true}
-                                onChange={(e) =>
-                                  setLunchBreakByDay({
-                                    ...lunchBreakByDay,
-                                    [day]: {
-                                      ...lunchBreakByDay[day],
-                                      enabled: e.target.checked,
-                                    },
-                                  })
-                                }
-                              />
-                              <span
-                                style={{
-                                  fontSize: "0.875rem",
-                                  fontWeight: 500,
-                                }}
-                              >
-                                {dayLabels[day]}
-                              </span>
-                            </label>
-
-                            {lunchBreakByDay[day]?.enabled && (
-                              <>
-                                <select
-                                  value={lunchBreakByDay[day]?.start || "13:00"}
-                                  onChange={(e) =>
-                                    setLunchBreakByDay({
-                                      ...lunchBreakByDay,
-                                      [day]: {
-                                        ...lunchBreakByDay[day],
-                                        start: e.target.value,
-                                      },
-                                    })
-                                  }
-                                  style={{
-                                    flex: 1,
-                                    padding: "0.5rem",
-                                    fontSize: "0.875rem",
-                                  }}
-                                >
-                                  {TIME_OPTIONS.map((time) => (
-                                    <option key={time} value={time}>
-                                      {time}
-                                    </option>
-                                  ))}
-                                </select>
-                                <span
-                                  style={{
-                                    fontSize: "0.875rem",
-                                    color: "rgba(255, 255, 255, 0.5)",
-                                  }}
-                                >
-                                  -
-                                </span>
-                                <select
-                                  value={lunchBreakByDay[day]?.end || "14:00"}
-                                  onChange={(e) =>
-                                    setLunchBreakByDay({
-                                      ...lunchBreakByDay,
-                                      [day]: {
-                                        ...lunchBreakByDay[day],
-                                        end: e.target.value,
-                                      },
-                                    })
-                                  }
-                                  style={{
-                                    flex: 1,
-                                    padding: "0.5rem",
-                                    fontSize: "0.875rem",
-                                  }}
-                                >
-                                  {TIME_OPTIONS.map((time) => (
-                                    <option key={time} value={time}>
-                                      {time}
-                                    </option>
-                                  ))}
-                                </select>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-
-          {/* Recreos */}
+          {/* Recreos y Almuerzos */}
           <div className="schedule-config-section">
             <div
               style={{
@@ -720,7 +468,7 @@ export function AcademicLevelScheduleConfig({
                 className="schedule-config-section-title"
                 style={{ margin: 0 }}
               >
-                🌤️ Recreos Cortos
+                🌤️ Recreos y Almuerzos
               </h4>
               <button
                 type="button"
@@ -728,20 +476,38 @@ export function AcademicLevelScheduleConfig({
                 className="schedule-editor-add-btn"
                 style={{ padding: "0.5rem 1rem", fontSize: "0.875rem" }}
               >
-                + Agregar Recreo
+                + Agregar Recreo/Almuerzo
               </button>
+            </div>
+
+            <div
+              style={{
+                marginBottom: "1rem",
+                padding: "0.75rem",
+                background: "rgba(59, 130, 246, 0.1)",
+                borderLeft: "3px solid rgb(59, 130, 246)",
+                borderRadius: "0.375rem",
+                fontSize: "0.875rem",
+                color: "rgba(255, 255, 255, 0.9)",
+              }}
+            >
+              <div style={{ marginBottom: "0.5rem" }}>
+                💡 <strong>Configura todos los descansos aquí</strong>
+              </div>
+              <ul style={{ margin: 0, paddingLeft: "1.5rem" }}>
+                <li>Recreos cortos: 15-20 minutos</li>
+                <li>Almuerzo: 30-60 minutos</li>
+                <li>Se insertan después del bloque que indiques</li>
+              </ul>
             </div>
 
             <p
               style={{
                 fontSize: "0.875rem",
-                color: "rgba(255, 255, 255, 0.6)",
+                color: "rgba(255, 255, 255, 0.75)",
                 marginBottom: "1rem",
               }}
             >
-              💡 Los recreos cortos se insertan entre bloques. El almuerzo se
-              configura arriba.
-              <br />
               📊 Rango válido: Bloque 1 a{" "}
               {calculateAvailableBlocks(
                 config.startTime,
@@ -757,10 +523,13 @@ export function AcademicLevelScheduleConfig({
                   fontSize: "0.875rem",
                   textAlign: "center",
                   padding: "2rem",
+                  background: "rgba(255, 255, 255, 0.03)",
+                  borderRadius: "0.5rem",
                 }}
               >
-                No hay recreos configurados. El almuerzo se configura en la
-                sección de arriba.
+                No hay recreos o almuerzos configurados.
+                <br />
+                Haz clic en "+ Agregar Recreo/Almuerzo" para crear uno.
               </p>
             ) : (
               <div className="breaks-list">
@@ -872,27 +641,47 @@ export function AcademicLevelScheduleConfig({
               </div>
             )}
           </div>
+
+          {/* Info sobre compatibilidad */}
+          <div
+            style={{
+              padding: "1rem",
+              background: "rgba(251, 191, 36, 0.1)",
+              border: "1px solid rgba(251, 191, 36, 0.3)",
+              borderRadius: "0.5rem",
+              fontSize: "0.875rem",
+              color: "rgba(251, 191, 36, 0.9)",
+            }}
+          >
+            ℹ️ <strong>Importante:</strong> Los recreos y almuerzos se aplican a
+            toda la semana. Si necesitas horarios diferentes por día, configura
+            múltiples recreos con diferentes duraciones.
+          </div>
+            </>
+          )}
         </div>
 
-        {/* Footer */}
-        <div className="quick-assign-modal-footer">
-          <button
-            type="button"
-            onClick={onClose}
-            className="quick-assign-btn secondary"
-            disabled={saving}
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            className="quick-assign-btn primary"
-            disabled={saving}
-          >
-            {saving ? "Guardando..." : "💾 Guardar Configuración"}
-          </button>
-        </div>
+        {/* Footer - Solo mostrar en pestañas de jornada, no en config */}
+        {activeTab !== "config" && (
+          <div className="quick-assign-modal-footer">
+            <button
+              type="button"
+              onClick={onClose}
+              className="quick-assign-btn secondary"
+              disabled={saving}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              className="quick-assign-btn primary"
+              disabled={saving}
+            >
+              {saving ? "Guardando..." : "💾 Guardar Configuración"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

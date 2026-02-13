@@ -57,7 +57,7 @@
 }
 
 .school-form input::placeholder {
-  color: rgba(255, 255, 255, 0.4) !important;
+  color: rgba(255, 255, 255, 0.65) !important;
 }
 
 .school-form input:focus,

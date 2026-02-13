@@ -71,6 +71,10 @@ model School {
   phone   String?
   email   String?
 
+  // 🆕 Niveles académicos activos en este colegio
+  // Valores: "BASIC", "MIDDLE", o "BASIC,MIDDLE"
+  activeAcademicLevels String @default("BASIC,MIDDLE")
+
   // ⚠️ CAMPOS DEPRECADOS - Mantener solo por compatibilidad con datos existentes
   // Usar ScheduleLevelConfig para nueva funcionalidad
   scheduleStartTime String  @default("08:00")

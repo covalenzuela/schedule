@@ -320,7 +320,7 @@
 .auth-footer {
   text-align: center;
   font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.7);
   margin-top: var(--spacing-8);
 }
 
@@ -399,7 +399,7 @@
 }
 
 .auth-input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .auth-input:focus {

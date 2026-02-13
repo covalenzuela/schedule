@@ -103,7 +103,7 @@
 }
 
 .schools-search-input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .schools-search-input:focus {

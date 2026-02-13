@@ -1,4 +1,4 @@
-import { Navbar } from "@/components/layout/Navbar";
+import { Navbar, SkipToMain } from "@/components/layout";
 import { ModalProvider } from "@/contexts/ModalContext";
 import { Modal } from "@/components/ui";
 import { getSession } from "@/lib/session";
@@ -13,8 +13,15 @@ export default async function ProtectedLayout({
 
   return (
     <ModalProvider>
+      <SkipToMain />
       <Navbar userName={userName} />
-      <main className="min-h-screen" style={{ background: "#000" }}>
+      <main 
+        id="main-content" 
+        className="min-h-screen" 
+        style={{ background: "#000" }}
+        role="main"
+        aria-label="Contenido principal"
+      >
         {children}
       </main>
       <Modal />

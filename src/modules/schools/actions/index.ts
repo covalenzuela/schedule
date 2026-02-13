@@ -266,3 +266,61 @@ export async function updateSchoolScheduleConfig(
   revalidatePath("/schedules");
   return { success: true };
 }
+
+// ============================================
+// 🎓 ACTIVE ACADEMIC LEVELS MANAGEMENT
+// ============================================
+
+/**
+ * Obtener niveles académicos activos de un colegio
+ */
+export async function getSchoolActiveAcademicLevels(
+  schoolId: string
+): Promise<string> {
+  const hasAccess = await userHasAccessToSchool(schoolId);
+  if (!hasAccess) {
+    throw new Error("No tienes acceso a este colegio");
+  }
+
+  const school = await prisma.school.findUnique({
+    where: { id: schoolId },
+    select: { activeAcademicLevels: true },
+  });
+
+  return school?.activeAcademicLevels || "BASIC,MIDDLE";
+}
+
+/**
+ * Actualizar niveles académicos activos de un colegio
+ */
+export async function updateSchoolActiveAcademicLevels(
+  schoolId: string,
+  activeLevels: string[] // ["BASIC", "MIDDLE"] o ["BASIC"] o ["MIDDLE"]
+): Promise<void> {
+  const hasAccess = await userHasAccessToSchool(schoolId);
+  if (!hasAccess) {
+    throw new Error("No tienes acceso a este colegio");
+  }
+
+  // Validar que al menos haya un nivel activo
+  if (activeLevels.length === 0) {
+    throw new Error("Debe haber al menos un nivel académico activo");
+  }
+
+  // Validar que solo sean BASIC o MIDDLE
+  const validLevels = activeLevels.every((level) =>
+    ["BASIC", "MIDDLE"].includes(level)
+  );
+  if (!validLevels) {
+    throw new Error("Niveles académicos inválidos");
+  }
+
+  const activeAcademicLevels = activeLevels.join(",");
+
+  await prisma.school.update({
+    where: { id: schoolId },
+    data: { activeAcademicLevels },
+  });
+
+  revalidatePath("/schools");
+}

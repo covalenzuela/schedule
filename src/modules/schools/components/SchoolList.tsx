@@ -37,13 +37,18 @@ export function SchoolList({
     <div>
       {/* Búsqueda */}
       <div className="schools-search" style={{ position: "relative" }}>
-        <span className="schools-search-icon">🔍</span>
+        <label htmlFor="school-search" className="sr-only">
+          Buscar colegios
+        </label>
+        <span className="schools-search-icon" aria-hidden="true">🔍</span>
         <input
+          id="school-search"
           type="search"
           className="schools-search-input"
           placeholder="Buscar colegios..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          aria-label="Buscar colegios por nombre o dirección"
         />
       </div>
 

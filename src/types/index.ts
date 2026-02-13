@@ -87,11 +87,10 @@ export type UpdateSubjectInput = Partial<CreateSubjectInput> & { id: string };
 // 🎓 CURSOS (Courses)
 // ============================================
 
-export enum AcademicLevel {
-  PRIMARY = 'PRIMARY',
-  SECONDARY = 'SECONDARY',
-  HIGH_SCHOOL = 'HIGH_SCHOOL',
-}
+// Importar AcademicLevel desde schedule-config (fuente única de verdad)
+import type { AcademicLevel } from './schedule-config';
+
+export type { AcademicLevel } from './schedule-config';
 
 export interface Course {
   id: string;
@@ -99,7 +98,7 @@ export interface Course {
   name: string; // e.g., "1° Básico A", "4° Medio B"
   grade: string; // e.g., "1", "2", "3"
   section: string; // e.g., "A", "B", "C"
-  academicLevel: AcademicLevel;
+  academicLevel: AcademicLevel; // BASIC o MIDDLE
   academicYear: number; // e.g., 2024, 2025
   studentCount?: number;
   createdAt: Date;
@@ -284,11 +283,8 @@ export const DAY_LABELS: Record<DayOfWeek, string> = {
   [DayOfWeek.SUNDAY]: 'Domingo',
 };
 
-export const ACADEMIC_LEVEL_LABELS: Record<AcademicLevel, string> = {
-  [AcademicLevel.PRIMARY]: 'Básica',
-  [AcademicLevel.SECONDARY]: 'Media',
-  [AcademicLevel.HIGH_SCHOOL]: 'Educación Media',
-};
+// Etiquetas de niveles académicos (importadas desde schedule-config)
+export { ACADEMIC_LEVEL_LABELS } from './schedule-config';
 
 export const DEFAULT_TIME_BLOCKS: TimeBlock[] = [
   { id: '1', blockNumber: 1, startTime: '08:00', endTime: '08:45', duration: 45 },

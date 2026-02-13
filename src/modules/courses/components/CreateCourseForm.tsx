@@ -8,16 +8,11 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useModal } from "@/contexts/ModalContext";
 import { createCourse } from "@/modules/courses/actions";
-import { getSchools } from "@/modules/schools/actions";
+import { getSchools, getSchoolActiveAcademicLevels } from "@/modules/schools/actions";
+import { getActiveLevelsWithLabels } from "@/lib/utils/academic-levels";
 import { Input, Select } from "@/components/ui";
 import type { School } from "@/types";
 import "./CourseForms.css";
-
-const ACADEMIC_LEVELS = [
-  { value: "PRIMARIA", label: "Primaria" },
-  { value: "SECUNDARIA", label: "Secundaria" },
-  { value: "MEDIA", label: "Media" },
-];
 
 interface CreateCourseFormProps {
   onSuccess?: () => void;
@@ -32,6 +27,9 @@ export function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
   const [formData, setFormData] = useState({
     schoolId: "",
   });
+  const [availableLevels, setAvailableLevels] = useState<
+    Array<{ value: string; label: string }>
+  >([]);
 
   useEffect(() => {
     const loadSchools = async () => {
@@ -41,10 +39,28 @@ export function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
       // Si solo hay un colegio, auto-seleccionarlo
       if (data.length === 1) {
         setFormData({ schoolId: data[0].id });
+        loadActiveLevels(data[0].id);
       }
     };
     loadSchools();
   }, []);
+
+  const loadActiveLevels = async (schoolId: string) => {
+    try {
+      const levelsString = await getSchoolActiveAcademicLevels(schoolId);
+      const levels = getActiveLevelsWithLabels(levelsString);
+      setAvailableLevels(
+        levels.map((l) => ({ value: l.value, label: l.label }))
+      );
+    } catch (error) {
+      console.error("Error cargando niveles activos:", error);
+      // Fallback a todos los niveles si falla
+      setAvailableLevels([
+        { value: "BASIC", label: "Educación Básica (1° a 8°)" },
+        { value: "MIDDLE", label: "Educación Media (1° a 4°)" },
+      ]);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -92,7 +108,13 @@ export function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
           required
           disabled={isLoading}
           value={formData.schoolId}
-          onChange={(e) => setFormData({ schoolId: e.target.value })}
+          onChange={(e) => {
+            const schoolId = e.target.value;
+            setFormData({ schoolId });
+            if (schoolId) {
+              loadActiveLevels(schoolId);
+            }
+          }}
           placeholder="Selecciona un colegio"
           options={schools.map((school) => ({
             value: school.id,
@@ -152,8 +174,9 @@ export function CreateCourseForm({ onSuccess }: CreateCourseFormProps) {
             id="academicLevel"
             name="academicLevel"
             required
-            disabled={isLoading}
-            options={ACADEMIC_LEVELS}
+            disabled={isLoading || !formData.schoolId || availableLevels.length === 0}
+            options={availableLevels}
+            placeholder={!formData.schoolId ? "Primero selecciona un colegio" : "Selecciona nivel"}
           />
         </div>
       </div>

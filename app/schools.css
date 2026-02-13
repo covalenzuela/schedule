@@ -103,7 +103,7 @@
 }
 
 .schools-search-input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .schools-search-input:focus {
@@ -118,7 +118,7 @@
   left: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.7);
   pointer-events: none;
 }
 

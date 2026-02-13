@@ -16,53 +16,63 @@ async function main() {
   for (const school of schools) {
     console.log(`🏫 Procesando: ${school.name}`);
 
-    // Configuración para BÁSICA (1° a 8°)
-    const basicConfig = await prisma.scheduleLevelConfig.upsert({
-      where: {
-        schoolId_academicLevel: {
+    // Obtener niveles activos del colegio
+    const activeLevels = school.activeAcademicLevels.split(",");
+    console.log(`   Niveles activos: ${activeLevels.join(", ")}`);
+
+    // Configuración para BÁSICA (si está activa)
+    if (activeLevels.includes("BASIC")) {
+      await prisma.scheduleLevelConfig.upsert({
+        where: {
+          schoolId_academicLevel: {
+            schoolId: school.id,
+            academicLevel: "BASIC",
+          },
+        },
+        create: {
           schoolId: school.id,
           academicLevel: "BASIC",
+          startTime: "08:00",
+          endTime: "17:00",
+          blockDuration: 45,
+          breaks: JSON.stringify([
+            { afterBlock: 2, duration: 15, name: "Recreo" },
+            { afterBlock: 4, duration: 15, name: "Recreo" },
+            { afterBlock: 6, duration: 45, name: "Almuerzo" },
+          ]),
         },
-      },
-      create: {
-        schoolId: school.id,
-        academicLevel: "BASIC",
-        startTime: "08:00",
-        endTime: "17:00",
-        blockDuration: 45,
-        breaks: JSON.stringify([
-          { afterBlock: 2, duration: 15, name: "Recreo" },
-          { afterBlock: 4, duration: 15, name: "Recreo" },
-          { afterBlock: 6, duration: 45, name: "Almuerzo" },
-        ]),
-      },
-      update: {},
-    });
-    console.log(`  ✅ Config BÁSICA creada/actualizada`);
+        update: {},
+      });
+      console.log(`  ✅ Config BÁSICA creada/actualizada`);
+    }
 
-    // Configuración para MEDIA (1° a 4°)
-    const middleConfig = await prisma.scheduleLevelConfig.upsert({
-      where: {
-        schoolId_academicLevel: {
+    // Configuración para MEDIA (si está activa)
+    if (activeLevels.includes("MIDDLE")) {
+      await prisma.scheduleLevelConfig.upsert({
+        where: {
+          schoolId_academicLevel: {
+            schoolId: school.id,
+            academicLevel: "MIDDLE",
+          },
+        },
+        create: {
           schoolId: school.id,
           academicLevel: "MIDDLE",
+          startTime: "08:00",
+          endTime: "18:00",
+          blockDuration: 90,
+          breaks: JSON.stringify([
+            { afterBlock: 2, duration: 15, name: "Recreo" },
+            { afterBlock: 4, duration: 45, name: "Almuerzo" },
+            { afterBlock: 6, duration: 15, name: "Recreo" },
+          ]),
         },
-      },
-      create: {
-        schoolId: school.id,
-        academicLevel: "MIDDLE",
-        startTime: "08:00",
-        endTime: "18:00",
-        blockDuration: 90,
-        breaks: JSON.stringify([
-          { afterBlock: 2, duration: 15, name: "Recreo" },
-          { afterBlock: 4, duration: 45, name: "Almuerzo" },
-          { afterBlock: 6, duration: 15, name: "Recreo" },
-        ]),
-      },
-      update: {},
-    });
-    console.log(`  ✅ Config MEDIA creada/actualizada\n`);
+        update: {},
+      });
+      console.log(`  ✅ Config MEDIA creada/actualizada`);
+    }
+
+    console.log();
   }
 
   // 3. Actualizar cursos existentes con academicLevel

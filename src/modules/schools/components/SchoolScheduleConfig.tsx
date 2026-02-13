@@ -137,13 +137,18 @@ export function SchoolScheduleConfig({
               style={{
                 margin: "0.25rem 0 0 0",
                 fontSize: "0.875rem",
-                color: "rgba(255, 255, 255, 0.6)",
+                color: "rgba(255, 255, 255, 0.75)",
               }}
             >
               {schoolName}
             </p>
           </div>
-          <button onClick={onClose} className="quick-assign-modal-close">
+          <button 
+            onClick={onClose} 
+            className="quick-assign-modal-close"
+            aria-label="Cerrar modal de configuración"
+            title="Cerrar"
+          >
             ×
           </button>
         </div>
@@ -153,7 +158,7 @@ export function SchoolScheduleConfig({
             style={{
               marginBottom: "1.5rem",
               fontSize: "0.9375rem",
-              color: "rgba(255, 255, 255, 0.7)",
+              color: "rgba(255, 255, 255, 0.8)",
             }}
           >
             Define el horario base que se aplicará a todos los cursos de este
