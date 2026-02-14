@@ -181,6 +181,7 @@ export default function SubjectsPage() {
   >(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const { openModal, closeModal } = useModal();
 
   // Accordion state - todas las categorías abiertas por defecto
@@ -264,9 +265,18 @@ export default function SubjectsPage() {
     }));
   };
 
+  // Verificar si un código ya existe en la escuela seleccionada
+  const isCodeTaken = (code: string) => {
+    if (!formData.schoolId) return false;
+    return subjects.some(
+      subject => subject.schoolId === formData.schoolId && subject.code === code
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setIsLoading(true);
 
     console.log("Submitting subject with data:", {
@@ -288,24 +298,30 @@ export default function SubjectsPage() {
         color: formData.color || undefined,
       });
 
+      // Mostrar mensaje de éxito
+      setSuccess(`✅ Asignatura "${formData.name}" creada exitosamente`);
+
       // Reload subjects
       const subjectsData = await getSubjects();
       setSubjects(subjectsData);
 
-      // Reset form
-      setShowCreateForm(false);
-      setSelectedTemplate(null);
-      setFormData({
-        schoolId: "",
-        name: "",
-        code: "",
-        description: "",
-        color: "#3B82F6",
-      });
+      // Reset form después de 1.5 segundos
+      setIsLoading(false);
+      setTimeout(() => {
+        setShowCreateForm(false);
+        setSelectedTemplate(null);
+        setSuccess("");
+        setFormData({
+          schoolId: "",
+          name: "",
+          code: "",
+          description: "",
+          color: "#3B82F6",
+        });
+      }, 1500);
     } catch (error) {
       console.error("Error al crear asignatura:", error);
-      setError("Error al crear la asignatura. Por favor intenta nuevamente.");
-    } finally {
+      setError(error instanceof Error ? error.message : "Error al crear la asignatura. Por favor intenta nuevamente.");
       setIsLoading(false);
     }
   };
@@ -648,44 +664,55 @@ export default function SubjectsPage() {
                       </div>
                       {openCategories[category.category] && (
                         <div className="template-grid">
-                          {category.subjects.map((template) => (
-                            <button
-                              key={template.code}
-                              type="button"
-                              className={`template-card ${
-                                selectedTemplate?.code === template.code
-                                  ? "selected"
-                                  : ""
-                              }`}
-                              onClick={() => handleTemplateSelect(template)}
-                              style={
-                                {
-                                  "--template-color": template.color,
-                                } as React.CSSProperties
-                              }
-                            >
-                              <div className="template-selected-badge">
-                                ✓ Seleccionada
-                              </div>
-                              <div className="template-header">
-                                <div className="template-info">
-                                  <h5 className="template-name">
-                                    {template.name}
-                                  </h5>
-                                  <span className="template-code">
-                                    {template.code}
-                                  </span>
+                          {category.subjects.map((template) => {
+                            const isTaken = isCodeTaken(template.code);
+                            return (
+                              <button
+                                key={template.code}
+                                type="button"
+                                className={`template-card ${
+                                  selectedTemplate?.code === template.code
+                                    ? "selected"
+                                    : ""
+                                } ${isTaken ? "taken" : ""}`}
+                                onClick={() => handleTemplateSelect(template)}
+                                style={
+                                  {
+                                    "--template-color": template.color,
+                                  } as React.CSSProperties
+                                }
+                              >
+                                {isTaken && (
+                                  <div className="template-taken-badge">
+                                    <span>⚠️</span> Código ya usado
+                                  </div>
+                                )}
+                                <div className="template-selected-badge">
+                                  ✓ Seleccionada
                                 </div>
-                                <div
-                                  className="template-color"
-                                  style={{ backgroundColor: template.color }}
-                                />
-                              </div>
-                              <p className="template-description">
-                                {template.description}
-                              </p>
-                            </button>
-                          ))}
+                                <div className="template-header">
+                                  <div className="template-info">
+                                    <h5 className="template-name">
+                                      {template.name}
+                                    </h5>
+                                    <span className="template-code">
+                                      {template.code}
+                                    </span>
+                                  </div>
+                                  <div
+                                    className="template-color"
+                                    style={{ backgroundColor: template.color }}
+                                  />
+                                </div>
+                                <p className="template-description">
+                                  {template.description}
+                                </p>
+                                {isTaken && (
+                                  <p className="template-hint">Puedes modificar el código abajo</p>
+                                )}
+                              </button>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -802,18 +829,43 @@ export default function SubjectsPage() {
                 </div>
               </div>
 
+              {success && (
+                <div
+                  className="form-success"
+                  style={{
+                    padding: "1rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.75rem",
+                    background: "rgba(34, 197, 94, 0.1)",
+                    border: "1px solid rgba(34, 197, 94, 0.3)",
+                    borderRadius: "0.75rem",
+                    color: "#86efac",
+                    animation: "slideIn 0.3s ease-out",
+                  }}
+                >
+                  <span style={{ fontSize: "1.25rem" }}>✅</span>
+                  <span>{success}</span>
+                </div>
+              )}
+
               {error && (
                 <div
                   className="form-error"
                   style={{
                     padding: "1rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.75rem",
                     background: "rgba(239, 68, 68, 0.1)",
                     border: "1px solid rgba(239, 68, 68, 0.3)",
                     borderRadius: "0.75rem",
                     color: "#fca5a5",
+                    animation: "slideIn 0.3s ease-out",
                   }}
                 >
-                  {error}
+                  <span style={{ fontSize: "1.25rem" }}>⚠️</span>
+                  <span>{error}</span>
                 </div>
               )}
 
@@ -828,17 +880,26 @@ export default function SubjectsPage() {
                 <button
                   type="button"
                   onClick={() => setShowCreateForm(false)}
-                  disabled={isLoading}
+                  disabled={isLoading || !!success}
                   className="auth-button auth-button-outline"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isLoading || !!success}
                   className="auth-button auth-button-primary"
                 >
-                  {isLoading ? "Creando..." : "Crear Asignatura"}
+                  {isLoading ? (
+                    <>
+                      <span className="auth-button-spinner"></span>
+                      Creando...
+                    </>
+                  ) : success ? (
+                    "¡Creada! ✓"
+                  ) : (
+                    "Crear Asignatura"
+                  )}
                 </button>
               </div>
             </form>

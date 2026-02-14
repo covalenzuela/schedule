@@ -87,6 +87,20 @@ export async function createSubject(data: {
     );
   }
 
+  // Verificar si ya existe una asignatura con ese código en esta escuela
+  const existingSubject = await prisma.subject.findFirst({
+    where: {
+      schoolId: data.schoolId,
+      code: data.code,
+    },
+  });
+
+  if (existingSubject) {
+    throw new Error(
+      `Ya existe una asignatura con el código "${data.code}" en esta escuela`
+    );
+  }
+
   const subject = await prisma.subject.create({
     data,
   });
@@ -105,6 +119,39 @@ export async function updateSubject(
   }
 ) {
   const schoolIds = await getUserSchoolIds();
+
+  // Obtener la asignatura actual
+  const currentSubject = await prisma.subject.findFirst({
+    where: {
+      id,
+      schoolId: {
+        in: schoolIds,
+      },
+    },
+  });
+
+  if (!currentSubject) {
+    throw new Error("Asignatura no encontrada o sin acceso");
+  }
+
+  // Si se está actualizando el código, verificar que no exista otro con ese código en la misma escuela
+  if (data.code && data.code !== currentSubject.code) {
+    const existingSubject = await prisma.subject.findFirst({
+      where: {
+        schoolId: currentSubject.schoolId,
+        code: data.code,
+        id: {
+          not: id, // Excluir la asignatura actual
+        },
+      },
+    });
+
+    if (existingSubject) {
+      throw new Error(
+        `Ya existe otra asignatura con el código "${data.code}" en esta escuela`
+      );
+    }
+  }
 
   const subject = await prisma.subject.update({
     where: {

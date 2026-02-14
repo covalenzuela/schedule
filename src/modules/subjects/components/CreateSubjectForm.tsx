@@ -7,10 +7,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useModal } from '@/contexts/ModalContext';
-import { createSubject } from '@/modules/subjects/actions';
+import { createSubject, getSubjects } from '@/modules/subjects/actions';
 import { getSchools } from '@/modules/schools/actions';
 import { Input, Select } from '@/components/ui';
 import type { School } from '@/types';
+// @ts-ignore
 import './SubjectForms.css';
 
 // 📚 Plantillas de asignaturas predefinidas
@@ -68,17 +69,38 @@ export function CreateSubjectForm() {
   const { closeModal } = useModal();
   const [isLoading, setIsLoading] = useState(false);
   const [schools, setSchools] = useState<School[]>([]);
+  const [existingSubjects, setExistingSubjects] = useState<Array<{ id: string; schoolId: string; code: string; name: string }>>([]);
+  const [selectedSchoolId, setSelectedSchoolId] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [creationMode, setCreationMode] = useState<'template' | 'custom'>('template');
   const [selectedTemplate, setSelectedTemplate] = useState<typeof SUBJECT_TEMPLATES[0]['subjects'][0] | null>(null);
 
   useEffect(() => {
-    const loadSchools = async () => {
-      const data = await getSchools();
-      setSchools(data);
+    const loadData = async () => {
+      const [schoolsData, subjectsData] = await Promise.all([
+        getSchools(),
+        getSubjects()
+      ]);
+      setSchools(schoolsData);
+      // Solo guardar los campos necesarios
+      setExistingSubjects(subjectsData.map(s => ({
+        id: s.id,
+        schoolId: s.schoolId,
+        code: s.code,
+        name: s.name
+      })));
     };
-    loadSchools();
+    loadData();
   }, []);
+
+  // Verificar si un código ya existe en la escuela seleccionada
+  const isCodeTaken = (code: string) => {
+    if (!selectedSchoolId) return false;
+    return existingSubjects.some(
+      subject => subject.schoolId === selectedSchoolId && subject.code === code
+    );
+  };
 
   const handleTemplateSelect = (template: typeof SUBJECT_TEMPLATES[0]['subjects'][0]) => {
     setSelectedTemplate(template);
@@ -87,6 +109,7 @@ export function CreateSubjectForm() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
@@ -100,11 +123,16 @@ export function CreateSubjectForm() {
 
     try {
       await createSubject(data);
-      closeModal();
-      router.refresh();
+      setSuccess(`✅ Asignatura "${data.name}" creada exitosamente`);
+      setIsLoading(false);
+      
+      // Esperar 1.5 segundos para que el usuario vea el mensaje de éxito
+      setTimeout(() => {
+        closeModal();
+        router.refresh();
+      }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al crear la asignatura');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -113,7 +141,15 @@ export function CreateSubjectForm() {
     <form onSubmit={handleSubmit} className="subject-form">
       {error && (
         <div className="form-error">
-          {error}
+          <span className="form-message-icon">⚠️</span>
+          <span>{error}</span>
+        </div>
+      )}
+      
+      {success && (
+        <div className="form-success">
+          <span className="form-message-icon">✅</span>
+          <span>{success}</span>
         </div>
       )}
 
@@ -149,6 +185,12 @@ export function CreateSubjectForm() {
           name="schoolId"
           required
           disabled={isLoading}
+          value={selectedSchoolId}
+          onChange={(e) => {
+            setSelectedSchoolId(e.target.value);
+            setSelectedTemplate(null); // Limpiar selección al cambiar escuela
+            setError(''); // Limpiar errores
+          }}
           options={schools.map(school => ({
             value: school.id,
             label: school.name
@@ -159,36 +201,62 @@ export function CreateSubjectForm() {
       {/* Plantillas */}
       {creationMode === 'template' && (
         <div className="subject-templates">
-          <label className="form-label">Selecciona una asignatura</label>
-          {SUBJECT_TEMPLATES.map((category) => (
-            <div key={category.category} className="template-category">
-              <h4 className="template-category-title">{category.category}</h4>
-              <div className="template-grid">
-                {category.subjects.map((template) => (
-                  <button
-                    key={template.code}
-                    type="button"
-                    className={`template-card ${selectedTemplate?.code === template.code ? 'selected' : ''}`}
-                    onClick={() => handleTemplateSelect(template)}
-                    style={{ '--template-color': template.color } as React.CSSProperties}
-                  >
-                    <div className="template-selected-badge">✓ Seleccionada</div>
-                    <div className="template-header">
-                      <div className="template-info">
-                        <h5 className="template-name">{template.name}</h5>
-                        <span className="template-code">{template.code}</span>
-                      </div>
-                      <div 
-                        className="template-color" 
-                        style={{ backgroundColor: template.color }}
-                      />
-                    </div>
-                    <p className="template-description">{template.description}</p>
-                  </button>
-                ))}
-              </div>
+          <label className="form-label">
+            Selecciona una asignatura
+            {!selectedSchoolId && (
+              <span className="form-label-hint"> (Primero selecciona un colegio)</span>
+            )}
+          </label>
+          {!selectedSchoolId ? (
+            <div className="template-empty">
+              <span className="template-empty-icon">🏫</span>
+              <p>Selecciona un colegio para ver las plantillas disponibles</p>
             </div>
-          ))}
+          ) : (
+            SUBJECT_TEMPLATES.map((category) => (
+              <div key={category.category} className="template-category">
+                <h4 className="template-category-title">{category.category}</h4>
+                <div className="template-grid">
+                  {category.subjects.map((template) => {
+                    const isTaken = isCodeTaken(template.code);
+                    return (
+                      <button
+                        key={template.code}
+                        type="button"
+                        className={`template-card ${
+                          selectedTemplate?.code === template.code ? 'selected' : ''
+                        } ${isTaken ? 'taken' : ''}`}
+                        onClick={() => handleTemplateSelect(template)}
+                        style={{ '--template-color': template.color } as React.CSSProperties}
+                      >
+                        {isTaken && (
+                          <div className="template-taken-badge">
+                            <span>⚠️</span> Código ya usado
+                          </div>
+                        )}
+                        <div className="template-selected-badge">✓ Seleccionada</div>
+                        <div className="template-header">
+                          <div className="template-info">
+                            <h5 className="template-name">{template.name}</h5>
+                            <span className="template-code">{template.code}</span>
+                          </div>
+                          <div 
+                            className="template-color" 
+                            style={{ backgroundColor: template.color }}
+                          />
+                        </div>
+                        <p className="template-description">{template.description}</p>
+                        {isTaken && (
+                          <p className="template-hint">Puedes modificar el código abajo</p>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          )
+        }
         </div>
       )}
 
@@ -280,16 +348,25 @@ export function CreateSubjectForm() {
           type="button"
           className="auth-button auth-button-outline"
           onClick={closeModal}
-          disabled={isLoading}
+          disabled={isLoading || !!success}
         >
           Cancelar
         </button>
         <button
           type="submit"
           className="auth-button auth-button-primary"
-          disabled={isLoading}
+          disabled={isLoading || !!success}
         >
-          {isLoading ? 'Creando...' : 'Crear Asignatura'}
+          {isLoading ? (
+            <>
+              <span className="auth-button-spinner"></span>
+              Creando...
+            </>
+          ) : success ? (
+            '¡Creada! ✓'
+          ) : (
+            'Crear Asignatura'
+          )}
         </button>
       </div>
     </form>
