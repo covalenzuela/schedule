@@ -1,0 +1,449 @@
+.attendance-grid-container {
+  padding: 2rem;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.attendance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.attendance-header h2 {
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.attendance-period {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.1rem;
+  text-transform: capitalize;
+}
+
+.attendance-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  gap: 1rem;
+}
+
+.attendance-loading p {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.1rem;
+}
+
+.attendance-table-wrapper {
+  overflow-x: auto;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1200px;
+}
+
+.attendance-table thead {
+  background: rgba(255, 255, 255, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.attendance-table th {
+  padding: 0.75rem 0.5rem;
+  text-align: center;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.student-name-header {
+  text-align: left !important;
+  min-width: 200px;
+  padding-left: 1rem !important;
+  position: sticky;
+  left: 0;
+  background: rgba(30, 41, 59, 0.95);
+  z-index: 11;
+}
+
+.day-header {
+  min-width: 40px;
+  font-size: 0.85rem;
+}
+
+.stats-header {
+  background: rgba(59, 130, 246, 0.1);
+  min-width: 80px;
+}
+
+.attendance-table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.attendance-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.attendance-table tbody tr.alert-row {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.attendance-table tbody tr.alert-row:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+.attendance-table td {
+  padding: 0.5rem;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.student-name {
+  text-align: left !important;
+  padding-left: 1rem !important;
+  font-weight: 500;
+  position: sticky;
+  left: 0;
+  background: inherit;
+  z-index: 5;
+}
+
+.cell-status {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.cell-status:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.1);
+}
+
+.cell-status.present {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+}
+
+.cell-status.absent {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+/* Animación de hormiguitas para 3 ausencias consecutivas */
+.cell-status.consecutive-absences {
+  position: relative;
+  background: rgba(239, 68, 68, 0.3);
+  animation: marching-ants-bg 1s ease-in-out infinite alternate;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.6), inset 0 0 10px rgba(239, 68, 68, 0.4);
+}
+
+.cell-status.consecutive-absences::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border: 2px dashed #ef4444;
+  border-radius: 2px;
+  animation: marching-ants 1s linear infinite;
+  pointer-events: none;
+}
+
+.cell-status.consecutive-absences::after {
+  content: '⚠️';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 0.7rem;
+  animation: pulse 1s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes marching-ants {
+  to {
+    stroke-dashoffset: -20;
+    border-style: dashed;
+    border-color: #fca5a5;
+  }
+}
+
+@keyframes marching-ants-bg {
+  0% {
+    background: rgba(239, 68, 68, 0.3);
+  }
+  50% {
+    background: rgba(239, 68, 68, 0.5);
+  }
+  100% {
+    background: rgba(239, 68, 68, 0.3);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.7;
+  }
+}
+
+.cell-status.empty {
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.cell-disabled {
+  background: rgba(100, 100, 100, 0.1);
+  color: rgba(255, 255, 255, 0.2);
+  cursor: not-allowed;
+}
+
+/* Celdas de días especiales */
+.cell-special {
+  background: rgba(147, 51, 234, 0.2);
+  color: #c084fc;
+  font-size: 1.2rem;
+  cursor: help;
+  border: 1px solid rgba(147, 51, 234, 0.3);
+}
+
+.cell-special.special-holiday {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.cell-special.special-school_event {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.cell-special.special-no_attendance {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.cell-special.special-other {
+  background: rgba(107, 114, 128, 0.2);
+  color: #d1d5db;
+  border: 1px solid rgba(107, 114, 128, 0.3);
+}
+
+.stats-cell {
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.stats-cell.alert {
+  background: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  font-weight: 700;
+}
+
+.attendance-legend {
+  display: flex;
+  gap: 2rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  align-items: center;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+}
+
+.legend-box {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.legend-box.present {
+  background: #10b981;
+  color: #ffffff;
+  border: none;
+}
+
+.legend-box.absent {
+  background: #ef4444;
+  color: #ffffff;
+  border: none;
+}
+
+.legend-box.late {
+  background: #f59e0b;
+  color: #ffffff;
+  border: none;
+}
+
+.legend-box.justified {
+  background: #6366f1;
+  color: #ffffff;
+  border: none;
+}
+
+.legend-box.empty {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.legend-box.alert-indicator {
+  background: rgba(239, 68, 68, 0.3);
+  border: 2px solid #ef4444;
+}
+
+.legend-box.consecutive-alert {
+  background: rgba(239, 68, 68, 0.4);
+  color: #ffffff;
+  border: 2px dashed #ef4444;
+  animation: marching-ants-legend 1s linear infinite, pulse 1s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+}
+
+@keyframes marching-ants-legend {
+  to {
+    border-color: #fca5a5;
+  }
+}
+
+.legend-box.special-day {
+  background: rgba(147, 51, 234, 0.3);
+  color: #c084fc;
+  border: 1px solid rgba(147, 51, 234, 0.5);
+  font-size: 1.1rem;
+}
+
+.saving-indicator {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: rgba(59, 130, 246, 0.95);
+  color: #fff;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  font-weight: 500;
+  z-index: 1000;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.spinner-small {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .attendance-grid-container {
+    padding: 1rem;
+  }
+
+  .attendance-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .attendance-legend {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+}
+
+
+/* Ensure table elements use correct table display roles and horizontal writing mode */
+.attendance-table {
+  display: table !important;
+  width: 100%;
+}
+
+.attendance-table thead {
+  display: table-header-group !important;
+}
+
+.attendance-table tbody {
+  display: table-row-group !important;
+}
+
+.attendance-table tr {
+  display: table-row !important;
+}
+
+.attendance-table th,
+.attendance-table td {
+  display: table-cell !important;
+  writing-mode: horizontal-tb !important;
+  transform: none !important;
+}
+
+.attendance-table thead th {
+  white-space: nowrap;
+}
+
+.metrics-help-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.85);
+  margin-left: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+.metrics-help-btn:hover {
+  color: #fff;
+}
+

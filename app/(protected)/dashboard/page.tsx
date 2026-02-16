@@ -62,7 +62,13 @@ export default async function DashboardPage() {
       href: "/schedules",
     },
     {
-      icon: "📊",
+      icon: "�",
+      title: "Asistencia",
+      description: "Registro de asistencia",
+      href: "/attendance",
+    },
+    {
+      icon: "�📊",
       title: "Reportes",
       description: "Estadísticas y análisis",
       href: "/reports",

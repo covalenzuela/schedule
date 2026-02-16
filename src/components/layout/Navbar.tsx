@@ -150,8 +150,10 @@ export function Navbar({ children, userName }: NavbarProps) {
   const managementItems = [
     { href: "/schools", label: "Colegios", icon: "🏫" },
     { href: "/teachers", label: "Profesores", icon: "👨‍🏫" },
+    { href: "/students", label: "Alumnos", icon: "👨‍🎓" },
     { href: "/subjects", label: "Asignaturas", icon: "📚" },
     { href: "/courses", label: "Cursos", icon: "🎓" },
+    { href: "/settings", label: "Configuración", icon: "⚙️" },
   ];
 
   return (
@@ -173,6 +175,7 @@ export function Navbar({ children, userName }: NavbarProps) {
             <NavLink href="/dashboard">🏠 Dashboard</NavLink>
             <DropdownMenu title="Gestión" icon="⚙️" items={managementItems} />
             <NavLink href="/schedules">🗓️ Horarios</NavLink>
+            <NavLink href="/attendance">✅ Asistencia</NavLink>
           </div>
 
           {/* Acciones adicionales */}
@@ -224,6 +227,9 @@ export function Navbar({ children, userName }: NavbarProps) {
             <MobileNavLink href="/teachers" onClick={closeMenu}>
               👨‍🏫 Profesores
             </MobileNavLink>
+            <MobileNavLink href="/students" onClick={closeMenu}>
+              👨‍🎓 Alumnos
+            </MobileNavLink>
             <MobileNavLink href="/subjects" onClick={closeMenu}>
               📚 Asignaturas
             </MobileNavLink>
@@ -234,6 +240,10 @@ export function Navbar({ children, userName }: NavbarProps) {
 
           <MobileNavLink href="/schedules" onClick={closeMenu}>
             🗓️ Horarios
+          </MobileNavLink>
+
+          <MobileNavLink href="/attendance" onClick={closeMenu}>
+            ✅ Asistencia
           </MobileNavLink>
 
           {/* Usuario y Logout en menú móvil */}

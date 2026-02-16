@@ -96,6 +96,8 @@ model School {
   courses      Course[]
   schedules    Schedule[]
   levelConfigs ScheduleLevelConfig[] // 🆕 Configuración por nivel académico
+  students     Student[] // 🆕 Alumnos del colegio
+  specialDays  SpecialDay[] // 🆕 Días especiales/feriados
 
   @@map("schools")
 }
@@ -121,7 +123,7 @@ model ScheduleLevelConfig {
   updatedAt DateTime @updatedAt
 
   // Relations
-  school  School                        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  school  School                       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   history ScheduleLevelConfigHistory[] // 🆕 Historial de cambios
 
   @@unique([schoolId, academicLevel])
@@ -133,22 +135,22 @@ model ScheduleLevelConfig {
 // 📜 SCHEDULE LEVEL CONFIG HISTORY
 // ============================================
 model ScheduleLevelConfigHistory {
-  id            String   @id @default(cuid())
+  id            String @id @default(cuid())
   configId      String
   schoolId      String
   academicLevel String
-  
+
   // Configuración histórica
   startTime     String
   endTime       String
   blockDuration Int
   breaks        String // JSON array
-  
+
   // Metadata del cambio
-  changedBy     String? // userId del que hizo el cambio
-  changeReason  String? // Razón del cambio
-  createdAt     DateTime @default(now())
-  
+  changedBy    String? // userId del que hizo el cambio
+  changeReason String? // Razón del cambio
+  createdAt    DateTime @default(now())
+
   // Relations
   config ScheduleLevelConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
 
@@ -265,10 +267,12 @@ model Course {
   school         School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   schedules      Schedule[]
   scheduleBlocks ScheduleBlock[]
+  students       Student[] // 🆕 Relación con alumnos
+  attendances    Attendance[] // 🆕 Relación con asistencias
 
   @@index([schoolId])
   @@index([academicYear])
-  @@index([academicLevel]) // 🆕 Índice para filtrar por nivel
+  @@index([academicLevel])
   @@map("courses")
 }
 
@@ -336,4 +340,168 @@ model ScheduleBlock {
   @@index([teacherId])
   @@index([dayOfWeek])
   @@map("schedule_blocks")
+}
+
+// ============================================
+// 👨‍🎓 STUDENTS MODEL (Extendido)
+// ============================================
+model Student {
+  id       String @id @default(cuid())
+  schoolId String
+  courseId String // Curso actual
+
+  // Datos personales
+  firstName String
+  lastName  String
+  rut       String? // RUT o identificación nacional
+  birthDate DateTime?
+  gender    String? // M, F, Other
+  email     String?
+  phone     String?
+  address   String?
+
+  // Datos académicos
+  enrollmentDate   DateTime  @default(now()) // Fecha de ingreso al colegio
+  isActive         Boolean   @default(true) // Para alumnos retirados
+  withdrawalDate   DateTime? // Fecha de retiro (si aplica)
+  withdrawalReason String? // Razón del retiro
+
+  // Datos del apoderado/tutor
+  guardianName     String?
+  guardianRelation String? // padre, madre, tutor, abuelo, etc.
+  guardianPhone    String?
+  guardianEmail    String?
+  guardianRut      String?
+  guardianAddress  String? // Puede ser diferente a la del alumno
+
+  // Contacto de emergencia (puede ser diferente al apoderado)
+  emergencyName     String?
+  emergencyPhone    String?
+  emergencyRelation String?
+
+  // Información médica
+  bloodType         String? // A+, A-, B+, B-, AB+, AB-, O+, O-
+  allergies         String? // JSON o texto libre
+  medicalConditions String? // JSON o texto libre
+  medications       String? // JSON o texto libre
+  healthInsurance   String? // Nombre de la isapre/fonasa
+
+  // Metadata
+  notes     String? // Notas adicionales
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  school        School                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  course        Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  attendances   Attendance[]
+  courseHistory StudentCourseHistory[]
+  notifications Notification[]
+
+  @@index([schoolId])
+  @@index([courseId])
+  @@index([isActive])
+  @@index([rut])
+  @@map("students")
+}
+
+// ============================================
+// 📚 STUDENT COURSE HISTORY (Historial de Cursos)
+// ============================================
+model StudentCourseHistory {
+  id        String @id @default(cuid())
+  studentId String
+  courseId  String
+  schoolId  String
+
+  // Período en el curso
+  startDate DateTime // Fecha de inicio en este curso
+  endDate   DateTime? // Fecha de fin (null si es el curso actual)
+
+  // Razón del cambio
+  changeReason String? // promocion, repitencia, cambio_seccion, ingreso_tardio, etc.
+  academicYear Int // Año académico
+
+  // Metadata
+  notes     String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([courseId])
+  @@index([academicYear])
+  @@map("student_course_history")
+}
+
+// ============================================
+// ✅ ATTENDANCE MODEL
+// ============================================
+model Attendance {
+  id        String   @id @default(cuid())
+  studentId String
+  courseId  String
+  date      DateTime // Fecha de la asistencia
+  status    String // "present", "absent", "late", "justified"
+  notes     String? // Notas adicionales (ej: justificación)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, date]) // Un alumno solo puede tener un registro de asistencia por día
+  @@index([courseId])
+  @@index([date])
+  @@index([status])
+  @@map("attendances")
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  studentId String
+  type      String // "absence_alert", "low_attendance", "custom"
+  title     String
+  message   String
+  metadata  Json? // Información adicional (ausencias, teléfono, etc.)
+  isRead    Boolean   @default(false)
+  sentAt    DateTime? // Fecha de envío de WhatsApp
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relations
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// ============================================
+// 📅 SPECIAL DAYS (Feriados y Días Especiales)
+// ============================================
+model SpecialDay {
+  id          String   @id @default(cuid())
+  schoolId    String
+  date        DateTime // Fecha del día especial
+  name        String // Nombre del día (ej: "Feriado Nacional", "Día del Profesor")
+  type        String // holiday, school_event, no_attendance, other
+  description String? // Descripción adicional
+  recurring   Boolean  @default(false) // Si se repite cada año
+  isActive    Boolean  @default(true) // Para desactivar sin eliminar
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId])
+  @@index([date])
+  @@index([type])
+  @@index([isActive])
+  @@map("special_days")
 }

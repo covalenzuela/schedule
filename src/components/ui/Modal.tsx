@@ -19,6 +19,9 @@ import "./Modal.css";
 export function Modal() {
   const { isOpen, content, title, closeModal } = useModal();
 
+  // Modal max width can be provided by ModalContext via a window global (set in ModalProvider)
+  const modalMaxWidth = (typeof window !== "undefined" ? (window as unknown as { __modalMaxWidth?: string }).__modalMaxWidth : undefined);
+
   // Cerrar modal con tecla ESC
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -54,7 +57,7 @@ export function Modal() {
       aria-modal="true"
       aria-labelledby={title ? "modal-title" : undefined}
     >
-      <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-container" style={modalMaxWidth ? { maxWidth: modalMaxWidth } : undefined} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           {title && <h2 id="modal-title" className="modal-title">{title}</h2>}
           <button

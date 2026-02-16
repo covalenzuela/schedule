@@ -1,0 +1,8 @@
+[
+  { "date": "2026-01-01", "name": "Año Nuevo", "type": "holiday", "description": "Feriado nacional" },
+  { "date": "2026-04-03", "name": "Viernes Santo", "type": "holiday", "description": "Feriado religioso" },
+  { "date": "2026-05-01", "name": "Día del Trabajador", "type": "holiday", "description": "Feriado nacional" },
+  { "date": "2026-09-18", "name": "Independencia (18 Sept)", "type": "holiday", "description": "Feriado nacional" },
+  { "date": "2026-09-19", "name": "Independencia (19 Sept)", "type": "holiday", "description": "Feriado nacional" },
+  { "date": "2026-12-25", "name": "Navidad", "type": "holiday", "description": "Feriado nacional" }
+]
